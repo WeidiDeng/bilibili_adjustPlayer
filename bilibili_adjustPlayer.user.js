@@ -1828,22 +1828,18 @@
                         var newPlistId, oldPListId;
                         newPlistId = reloadPList.getPListId(location.href);
                         oldPListId = window.adjustPlayerCurrentPListId;
-                        if (newPlistId !== oldPListId) {
-                            console.log('reloadPList:\nnewPlistId:' + newPlistId + "\noldPListId:" + oldPListId);
-                            isReload = true;
-                            reloadPList.getScreenMode();
-                            if (typeof GM_getValue === 'function') {
-                                var setting = config.read();
-                                adjustPlayer.reload(setting);
-                            } else {
-                                var setting = config.read();
-                                setting.then(function(value) {
-                                    adjustPlayer.reload(value);
-                                });
-                            }
+                        console.log('reloadPList:\nnewPlistId:' + newPlistId + "\noldPListId:" + oldPListId);
+                        isReload = true;
+                        reloadPList.getScreenMode();
+                        if (typeof GM_getValue === 'function') {
+                            var setting = config.read();
+                            adjustPlayer.reload(setting);
+                        } else {
+                            var setting = config.read();
+                            setting.then(function(value) {
+                                adjustPlayer.reload(value);
+                            });
                         }
-                    } else {
-                        return;
                     }
                 }, 200);
             }
