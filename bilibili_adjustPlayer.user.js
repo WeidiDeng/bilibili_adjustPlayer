@@ -16,2087 +16,2086 @@
 // ==/UserScript==
 
 (function() {
-	'use strict';
-	var adjustPlayer = {
-		autoWidescreen: function(set, fullscreen) {
-			if (typeof set !== 'undefined') {
-				var autoWidescreen = function() {
-					var widescreenBtn = querySelectorFromIframe('.bilibili-player-video-btn-widescreen');
-					if (widescreenBtn !== null) {
-						var screenMode = sessionStorage.getItem("adjustPlayer_screenMode");
-						if (screenMode !== "widescreen") {
-							doClick(widescreenBtn);
-						}
-					}
-				};
-				autoWidescreen();
-				if (typeof fullscreen !== 'undefined') {
-					if (fullscreen === 'on') {
-						function fullscreenEvent(e) {
-							var element = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
-							if (typeof element === 'undefined') {
-								autoWidescreen();
-							}
-						}
-						document.addEventListener("fullscreenchange", fullscreenEvent);
-						document.addEventListener("webkitfullscreenchange", fullscreenEvent);
-						document.addEventListener("mozfullscreenchange", fullscreenEvent);
-						document.addEventListener("MSFullscreenChange", fullscreenEvent);
-					}
-				}
-			}
-		},
-		fixWidescreenFocusPlayer: function(setting, isReload, autoWidescreenCallback) {
-			var timerCount = 0;
-			var timer = window.setInterval(function() {
-				if (timerCount >= 20) {
-					clearInterval(timer);
-				}
-				timerCount++;
-				if (typeof unsafeWindow.PlayerAgent !== 'undefined') {
-					if (typeof unsafeWindow.PlayerAgent.player_widewin !== 'undefined') {
-						//console.log(unsafeWindow.PlayerAgent.player_widewin);
-						clearInterval(timer);
-						fixWidescreenFocusPlayer();
-					}
-				}
-			}, 200);
-
-			var fixWidescreenFocusPlayer = function() {
-				var callback = function() {
-					if (typeof autoWidescreenCallback === 'function') {
-						if (isReload) {
-							autoWidescreenCallback(true, setting.autoWidescreenFullscreen);
-						} else {
-							autoWidescreenCallback(setting.autoWidescreen, setting.autoWidescreenFullscreen);
-						}
-					}
-				};
-
-				if (setting.autoFocusPlayer) {
-					//unsafeWindow.PlayerAgent.player_widewin = null;
-					callback();
-					//adjustPlayer.autoFocusPlayer(true, setting.autoFocusPlayerOffsetType, setting.autoFocusPlayerOffsetValue);
-					return;
-				} else if (setting.resizePlayer) {
-					unsafeWindow.PlayerAgent.player_widewin = function() {
-						adjustPlayer.autoFocusPlayer(true, setting.autoFocusPlayerOffsetType, setting.autoFocusPlayerOffsetValue);
-					};
-					callback();
-					return;
-				} else {
-					callback();
-				}
-			};
-		},
-		autoFocusPlayer: function(set, offsetType, offsetValue, isShortcut) {
-			if (typeof set !== 'undefined') {
-				try {
-					var focusPlayer = function() {
-						setTimeout(function() {
-							var playerWrapper;
-							var scrollToY;
-							if (matchURL.isVideoAV()) {
-								playerWrapper = document.querySelector('#bofqi > .player');
-								scrollToY = playerWrapper.offsetTop;
-							}
-							if (typeof offsetValue !== 'undefined' && typeof offsetType !== 'undefined') {
-								if (offsetType === "add") {
-									scrollToY += offsetValue;
-								} else if (offsetType === "sub") {
-									scrollToY -= offsetValue;
-								}
-							}
-							if (typeof offsetValue === 'undefined') {
-								scrollToY -= 10;
-							}
-							var currentScrollToY = (window.pageYOffset || document.documentElement.scrollTop) - (document.documentElement.clientTop || 0);
-							var playerHeight = playerWrapper.offsetHeight;
-							var playerOffsetTop = playerWrapper.offsetTop;
-							if (currentScrollToY >= (playerHeight + playerOffsetTop) && isShortcut !== true) {
-								return;
-							} else {
-								unsafeWindow.scrollTo(0, scrollToY);
-							}
-						}, 200);
-					};
-					var timerCount = 0;
-					var timer = window.setInterval(function() {
-						if (timerCount >= 20) {
-							clearInterval(timer);
-						}
-						timerCount++;
-
-						var screenMode = sessionStorage.getItem("adjustPlayer_screenMode");
-						if (screenMode == 'widescreen') {
-							var widescreenReady = document.querySelector('.player-mode-widescreen')
-							if (widescreenReady !== null) {
-								if (isShortcut) {
-									unsafeWindow.scrollTo(0, 0);
-									focusPlayer();
-								} else {
-									focusPlayer();
-								}
-								clearInterval(timer);
-							}
-						} else {
-							if (isShortcut) {
-								unsafeWindow.scrollTo(0, 0);
-								focusPlayer();
-							} else {
-								focusPlayer();
-							}
-							clearInterval(timer);
-						}
-					}, 200);
-				} catch (e) {
-					console.log('autoFocus：' + e);
-				}
-			}
-		},
-		autoPlay: function(set, video) {
-			if (typeof set !== 'undefined' && video !== null) {
-				if (video.play) {
-					video.play();
-				}
-			}
-		},
-		chooseQuality: function(set, video) {
-			if (typeof set !== 'undefined' && video !== null) {
-				if (video.play) {
-					video.play();
-				}
-			}
-		},
-		hideDanmuku: function(set, type) {
-			if (typeof set !== 'undefined') {
-				var hideDanmuku = function() {
-					var controlBtn = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch > input');
-					if (controlBtn !== null) {
-
-						createMouseoverAndMouseoutEvent('show', controlBtn);
-                        			createMouseoverAndMouseoutEvent('hide', controlBtn);
-						
-						var chooseDanmaku = querySelectorFromIframe('.bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch .choose_danmaku');
-						if (chooseDanmaku.innerHTML === "关闭弹幕") {
-						  	doClick(controlBtn);
-							console.log("hide danmu");
-						}
-					}
-				};
-
-				if (typeof type !== 'undefined') {
-					if (type === "all") {
-						hideDanmuku();
-					} else if (type === "bangumi") {
-						if (matchURL.isOldBangumi() || matchURL.isNewBangumi()) {
-							hideDanmuku();
-						}
-					}
-				} else {
-					hideDanmuku();
-				}
-			}
-		},
-		hideDanmukuFilterType: function(set, type) {
-			if (typeof set !== 'undefined') {
-				var hideDanmukuFilterType = function(ftype) {
-					var controlBtn = querySelectorFromIframe('.bilibili-player-video-danmaku-setting-left-block-content .bilibili-player-block-filter-type[ftype=' + ftype + ']');
-					if (controlBtn !== null) {
-						doClick(controlBtn);
-						if (controlBtn.getAttribute("data-name") === "ctlbar_danmuku_" + ftype + "_on") {
-							doClick(controlBtn);
-						}
-					}
-				};
-
-				if (typeof type !== 'undefined') {
-					return new Promise(function(resolve, reject) {
-						if (type === 'topAndbottom') {
-							hideDanmukuFilterType('top');
-							hideDanmukuFilterType('bottom');
-						} else {
-							hideDanmukuFilterType(type);
-						}
-						resolve('hideDanmukuFilterType done');
-					});
-				}
-			}
-		},
-		danmukuPreventShade: function(set, type) {
-			if (typeof set !== 'undefined' && typeof type !== 'undefined') {
-				try {
-					var isDanmukuPreventShadeCheckboxSelected = function(ftype) {
-						var elem = querySelectorFromIframe('.bilibili-player-video-danmaku-setting-left-preventshade-box .bui-checkbox-label .bui-checkbox-icon-selected');
-						var theCSSprop = window.getComputedStyle(elem, null).getPropertyValue("display");
-						if (theCSSprop === 'block') {
-							return true;
-						} else {
-							return false;
-						}
-					};
-					var danmukuPreventShade = function() {
-						var controlBtn = querySelectorFromIframe('.bilibili-player-video-danmaku-setting-left-preventshade input[type="checkbox"]');
-						if (controlBtn !== null) {
-							return new Promise(function(resolve, reject) {
-								doClick(controlBtn);
-								resolve('danmukuPreventShade done');
-							});
-						}
-					};
-					if (type === 'on') {
-						if (!isDanmukuPreventShadeCheckboxSelected()) {
-							danmukuPreventShade();
-						}
-					} else if (type === 'off') {
-						if (isDanmukuPreventShadeCheckboxSelected()) {
-							danmukuPreventShade();
-						}
-					}
-
-				} catch (e) {
-					console.log('danmukuPreventShade：' + e);
-				}
-			}
-		},
-		tabDanmulist: function(set) {
-			if (typeof set !== 'undefined') {
-				try {
-					var timerCount = 0;
-					var timer = window.setInterval(function callback() {
-						if (timerCount >= 20) {
-							clearInterval(timer);
-						}
-						timerCount++;
-						var controlBtn = querySelectorFromIframe('#danmukuBox .bui-collapse-header');
-						if (controlBtn !== null) {
-							var isFolded = querySelectorFromIframe('#danmukuBox .bui-collapse-wrap-folded');
-							if (isFolded !== null) {
-								doClick(controlBtn);
-								clearInterval(timer);
-							}
-						}
-					}, 200);
-				} catch (e) {
-					console.log('tabDanmulist：' + e);
-				}
-			}
-		},
-		autoNextPlist: function(set) {
-			if (typeof set !== 'undefined') {
-				var video = querySelectorFromIframe('.bilibili-player-video > video:nth-child(1)')
-				video.addEventListener("ended", function(e) {
-					var paused = querySelectorFromIframe('.video-state-pause');
-                    			var nextBtn = querySelectorFromIframe('.bilibili-player-video-btn-next');
-
-					if (paused !== null && nextBtn !== null) {
-						doClick(nextBtn);
-					}
-				})
-			}
-		},
-		autoLoopVideo: function(set) {
-			if (typeof set !== 'undefined') {
-				var controlBtn = querySelectorFromIframe('.bilibili-player-video-btn-repeat');
-				if (controlBtn !== null) {
-					var dataText = controlBtn.querySelector('span.bilibili-player-iconfont-repeat').getAttribute("data-text");
-					if (dataText !== '关闭洗脑循环') {
-						doClick(controlBtn);
-					}
-				}
-			}
-		},
-		autoWebFullScreen: function(set) {
-			if (typeof set !== 'undefined') {
-				var controlBtn = querySelectorFromIframe('.bilibili-player-video-web-fullscreen > i');
-				if (controlBtn !== null) {
-					var screenMode = sessionStorage.getItem("adjustPlayer_screenMode");
-					if (screenMode !== "webfullscreen") {
-						doClick(controlBtn);
-					}
-				}
-			}
-		},
-		doubleClickFullScreen: function(set, delayed) {
-			if (typeof set !== 'undefined' && typeof delayed !== 'undefined') {
-				try {
-					var fullScreenBtn = querySelectorFromIframe('.bilibili-player-video-btn-fullscreen');
-					if (delayed === 0) {
-						var video = querySelectorFromIframe('.bilibili-player-video video');
-						video.addEventListener('dblclick', function() {
-							if (fullScreenBtn !== null) {
-								doClick(fullScreenBtn);
-							}
-						});
-					} else {
-						var videoParentNodeEvent = function() {
-							var dblclickTimer = null;
-							var videoParentNode = querySelectorFromIframe('.bilibili-player-video');
-							videoParentNode.addEventListener('click', function() {
-								clearTimeout(this.dblclickTimer);
-								this.dblclickTimer = setTimeout(function() {
-									var playPauseBtn = querySelectorFromIframe('.bilibili-player-video-btn-start');
-									if (playPauseBtn !== null) {
-										doClick(playPauseBtn);
-									}
-								}, delayed);
-							});
-							videoParentNode.addEventListener('dblclick', function() {
-								clearTimeout(this.dblclickTimer);
-								if (fullScreenBtn !== null) {
-									doClick(fullScreenBtn);
-								}
-							});
-						};
-
-						var iframePlayer = document.querySelector('iframe.bilibiliHtml5Player');
-						if (iframePlayer === null) {
-							window.eval([
-								'$(".bilibili-player-video").unbind("click");',
-								'window.bilibiliPlayerVideoEvents = $(".bilibili-player-video").data("events")'
-							].join(''));
-						} else {
-							iframePlayer.contentWindow.window.eval([
-								'$(".bilibili-player-video").unbind("click");',
-								'top.window.bilibiliPlayerVideoEvents = $(".bilibili-player-video").data("events")'
-							].join(''));
-						}
-
-						//console.log(unsafeWindow.bilibiliPlayerVideoEvents);
-						if (typeof unsafeWindow.bilibiliPlayerVideoEvents === 'undefined') {
-							videoParentNodeEvent();
-						} else {
-							if (typeof unsafeWindow.bilibiliPlayerVideoEvents.click === 'undefined') {
-								videoParentNodeEvent();
-							} else {
-								console.log('doubleClickFullScreen： unbind click event failed');
-								return;
-							}
-							console.log('doubleClickFullScreen： unbind click event failed');
-						}
-					}
-				} catch (e) {
-					console.log('doubleClickFullScreen：' + e);
-				}
-			}
-		},
-		autoVideoSpeed: function(set, speed, video) {
-			if (typeof set !== 'undefined' && video !== null) {
-				try {
-					var adjustPlayerVideoPlaybackRate = sessionStorage.getItem("adjustPlayer_videoPlaybackRate");
-					if (adjustPlayerVideoPlaybackRate !== null) {
-						video.playbackRate = parseFloat(adjustPlayerVideoPlaybackRate);
-						return;
-					}
-					var timerCount = 0;
-					var timer = window.setInterval(function() {
-						if ((timerCount >= 20) || video.playbackRate == speed) {
-							clearInterval(timer);
-						}
-						timerCount++;
-						//clearInterval(timer);
-						video.playbackRate = parseFloat(speed);
-						console.log(speed);
-					}, 200);
-					//video.playbackRate = parseFloat(speed);
-				} catch (e) {
-					console.log('autoVideoSpeed：' + e);
-				}
-			}
-		},
-		autoLightOn: function(set, type, callback) {
-			if (typeof set !== 'undefined') {
-				try {
-					var isActiveContextMenu = querySelectorFromIframe('.bilibili-player-context-menu-container.black');
-					if (isActiveContextMenu !== null && isActiveContextMenu.getAttribute("class").search("active") !== -1) {
-						return;
-					}
-
-					var clickLightOnOff = function(controlBtn) {
-						if (controlBtn !== null) {
-							var tipsText = null;
-							var lightOnOffItem = null;
-							var contextMenuItem = controlBtn.querySelectorAll('li > a'),
-								i;
-							for (i = 0; i < contextMenuItem.length; ++i) {
-								if (contextMenuItem[i].innerHTML === "关灯" || contextMenuItem[i].innerHTML === "开灯") {
-									var tipsText = contextMenuItem[i].innerHTML;
-									lightOnOffItem = contextMenuItem[i];
-									doClick(contextMenuItem[i]);
-									return tipsText;
-									break;
-								}
-							}
-						}
-						if (type === "ONOFF" && typeof callback === "function") {
-							callback();
-						}
-					};
-
-					var heimuDblclickEvent = function() {
-						var heimu = document.querySelector('#heimu');
-						var isDblclickEvent = heimu.getAttribute("heimuDblclick");
-						if (isDblclickEvent === null) {
-							heimu.addEventListener('dblclick', function() {
-								heimu.setAttribute("style", "display: none;");
-							});
-							heimu.setAttribute("heimuDblclick", "true");
-						}
-					};
-
-					var timerCount = 0;
-					var timer = window.setInterval(function callback() {
-						if (timerCount >= 20) {
-							clearInterval(timer);
-						}
-						timerCount++;
-
-						contextMenuClick(querySelectorFromIframe('.bilibili-player-area > .bilibili-player-video-wrap'));
-						var status = clickLightOnOff(querySelectorFromIframe('.bilibili-player-context-menu-container'));
-						heimuDblclickEvent();
-						if (type === "ON" || typeof type === 'undefined') {
-							if (status === "关灯") {
-								heimuDblclickEvent();
-								clearInterval(timer);
-							}
-						} else if (type === "ONOFF") {
-							if (status === "关灯" || status === "开灯") {
-								heimuDblclickEvent();
-								clearInterval(timer);
-							}
-						}
-
-					}, 200);
-				} catch (e) {
-					console.log('autoLightOn：' + e);
-				}
-			}
-		},
-		resizePlayer: function(set, width, ratio, videoInfoAndUpInfoPosition, isAutohideControlbar) {
-			if (typeof set !== 'undefined' && typeof width !== 'undefined') {
-				try {
-					var resizePlayer = function() {
-						var screenMode = sessionStorage.getItem("adjustPlayer_screenMode");
-						var playerCustomWidth = width + 'px';
-						var playerNormalModeWidth = 'calc(' + playerCustomWidth + ' - 350px - 30px )';
-						var playerMarginTop = 'calc(0px + 50px + 20px)';
-						var playerBottomBarHeight = isAutohideControlbar && screenMode === 'widescreen' ? playerBottomBarHeight = '0px' : playerBottomBarHeight = '46px';
-						var playerNormalModeHeight = 'calc( ' + playerNormalModeWidth + ' / calc(' + ratio + ') + ' + playerBottomBarHeight + ')';
-						var videoInfoAndUpInfo = '';
-
-						//videoInfoAndUpInfoPosition
-						if (videoInfoAndUpInfoPosition === 'top') {
-							playerMarginTop = 'calc(0px + 50px + 20px + 120px)';
-							videoInfoAndUpInfo = '#viewbox_report,#v_upinfo { position: absolute !important; top: 70px !important;  }' +
-								'#viewbox_report { max-width:calc(' + width + 'px - 384px - 20px ); }' +
-								'#v_upinfo{ margin-left: calc(' + width + 'px - 384px); max-width:384px; } .up-info .u-info .desc { max-width:calc(350px - 30px); } .up-info .btn { margin-top: 50px; position: absolute; left: 64px; }';
-						} else if (videoInfoAndUpInfoPosition === 'bottom') {
-							videoInfoAndUpInfo = '';
-						} else {
-							videoInfoAndUpInfo = '';
-						}
-
-						var css = [''];
-						if (screenMode === "normal") {
-							css = [
-								'@media (min-width: ' + playerCustomWidth + ' ) {',
-								'#bofqi:not(.mini-player) {',
-								'    width: ' + playerCustomWidth + ' !important; ',
-								'    height: ' + playerNormalModeHeight + ' !important; ',
-								'    margin-left: 0 !important;',
-								'    left: calc(50% - ' + playerCustomWidth + ' / 2) !important; ',
-								'    top: ' + playerMarginTop + ' !important;',
-								'    background: none !important;',
-								'    pointer-events: none;',
-								'    position: absolute !important;',
-								'}',
-								'#bofqi:not(.mini-player) .player{',
-								'    width: ' + playerNormalModeWidth + ' !important; ',
-								'    height: ' + playerNormalModeHeight + ' !important; ',
-								'    pointer-events: none;',
-								'}',
-								'#playerWrap { height: 0px !important; },',
-								'.v-wrap  { width: ' + playerCustomWidth + ' !important; margin: 0 auto !important; }',
-								'.v-wrap .l-con { width: calc(100% - 350px - 30px) !important; }',
-								'.v-wrap .r-con { width: 350px !important; }',
-								'.v-wrap .l-con , .v-wrap .r-con { margin-top:calc(' + playerNormalModeHeight + ' + ' + playerMarginTop + ' ) !important; }',
-								'#danmukuBox { position: absolute !important; top: ' + playerMarginTop + ' !important; height: ' + playerNormalModeHeight + ' !important; }',
-								'' + videoInfoAndUpInfo + '',
-								'}'
-							];
-						} else if (screenMode === "widescreen") {
-							css = [
-								'@media (min-width: ' + playerCustomWidth + ' ) {',
-								'#bofqi:not(.mini-player) {',
-								'    width: ' + playerCustomWidth + ' !important; ',
-								'    height: calc( ' + playerCustomWidth + ' / calc(' + ratio + ') + ' + playerBottomBarHeight + ') !important; ',
-								'    margin-left: 0 !important;',
-								'    left: calc(50% - ' + playerCustomWidth + ' / 2) !important; ',
-								'    top: ' + playerMarginTop + ' !important;',
-								'    position: absolute !important;',
-								'}',
-								'#playerWrap { height:0px !important; },',
-								'.v-wrap  { width: ' + playerCustomWidth + ' !important; margin: 0 auto !important; }',
-								'.v-wrap .l-con { width: calc(100% - 350px - 30px) !important; }',
-								'.v-wrap .r-con { width: 350px !important; }',
-								'.v-wrap .l-con , .v-wrap .r-con { margin-top:calc(' + playerCustomWidth + ' / calc(' + ratio + ') + ' + playerBottomBarHeight + ' + ' + playerMarginTop + ' ) !important; }',
-								'#danmukuBox { position: absolute !important; top: ' + playerMarginTop + ' !important; height: ' + playerNormalModeHeight + ' !important; visibility: hidden;}',
-								'' + videoInfoAndUpInfo + '',
-								'}'
-							];
-						}
-						var node = document.createElement('style');
-						node.type = 'text/css';
-						node.id = 'adjustPlayerSize';
-						var adjustMiniPlayerSizeCSS = document.querySelector('#adjustPlayerSize');
-						if (adjustMiniPlayerSizeCSS !== null) {
-							adjustMiniPlayerSizeCSS.remove();
-						}
-						node.appendChild(document.createTextNode(css.join('')));
-						document.documentElement.appendChild(node);
-
-						//修复高度不正确
-						var evt = document.createEvent('Event');
-						evt.initEvent('resize', true, true);
-						querySelectorFromIframe('.bilibili-player-video video').dispatchEvent(evt);
-
-						//普通模式下超过最小高度不调整
-						if (screenMode === "normal") {
-							var player = document.querySelector('#bofqi:not(.mini-player)');
-							if (player !== null) {
-								if (player.offsetHeight <= 408) {
-									var adjustMiniPlayerSizeCSS = document.querySelector('#adjustPlayerSize');
-									if (adjustMiniPlayerSizeCSS !== null) {
-										adjustMiniPlayerSizeCSS.remove();
-									}
-								}
-							}
-						}
-					};
-					var fixSwitchScreenMode = function() {
-						var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
-						var observer = new MutationObserver(function(records) {
-							records.map(function(record) {
-								var resizeTimer;
-								resizeTimer = setTimeout(function() {
-									clearTimeout(this.resizeTimer);
-									resizePlayer();
-								}, 200);
-							});
-						});
-						observer.observe(document.querySelector('#bofqi'), {
-							attributes: true,
-							childList: true
-						});
-					}
-					var player = isPlayer();
-					if (player === "html5Player") {
-						setTimeout(function() {
-							if (document.querySelector('#adjustPlayerSize') !== null) {
-								fixSwitchScreenMode();
-								return;
-							} else {
-								resizePlayer();
-								fixSwitchScreenMode();
-							}
-						}, 200);
-					}
-				} catch (e) {
-					console.log('resizePlayer：' + e);
-				}
-			}
-		},
-		resizeMiniPlayer: function(set, width, isResizable) {
-			if (typeof set !== 'undefined' && typeof width !== 'undefined') {
-				var resize = function() {
-					var css = [
-						'#bofqi.mini-player, #bofqi.mini-player:before , #bofqi.mini-player .player { width: ' + width + 'px !important; height: calc(' + width + 'px / calc(16 / 9)) !important; }',
-						'#adjust-player-miniplayer-resizable { width: ' + width + 'px ; height: calc(' + width + 'px / calc(16 / 9)) !important; position: absolute; top: 0px; z-index: 0; overflow: hidden; resize: both; min-height:100px; min-width:100px; }',
-						'#adjust-player-miniplayer-resizable.show,#adjust-player-miniplayer-resizable.show .drag { display:block !important; }',
-						'.newfloat #adjust-player-miniplayer-resizable, .mini-player #adjust-player-miniplayer-resizable { z-index: 10000; }'
-					];
-					var node = document.createElement('style');
-					node.type = 'text/css';
-					node.id = 'adjustMiniPlayerSize';
-					node.appendChild(document.createTextNode(css.join('')));
-					var adjustMiniPlayerSizeCSS = document.querySelector("#adjustMiniPlayerSize");
-					if (adjustMiniPlayerSizeCSS !== null) {
-						adjustMiniPlayerSizeCSS.remove();
-					}
-					document.documentElement.appendChild(node);
-				};
-
-				var resizable = function(initResize) {
-					//console.log("resizable");
-					var resizableElement = document.createElement('div');
-					resizableElement.id = "adjust-player-miniplayer-resizable";
-					resizableElement.innerHTML = '<div class="drag" style="width: 10px; height: 10px; position: absolute; bottom: 0px; right: 0; background: #fff; pointer-events: none;display:none;">↘</div>';
-
-					var miniPlayerDiv = document.querySelector('.mini-player');
-					if (miniPlayerDiv !== null) {
-						var adjustMiniPlayerSizeResizable = document.querySelector("#adjust-player-miniplayer-resizable");
-						if (adjustMiniPlayerSizeResizable === null) {
-							miniPlayerDiv.appendChild(resizableElement);
-						}
-
-						var requestAnimationFrame = window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
-						var cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame;
-						var requestId;
-						var loopTimer;
-
-						var dragEvent = function(width, height) {
-							var css = [
-								'#bofqi.mini-player, #bofqi.mini-player:before , #bofqi.mini-player .player { width: ' + width + 'px !important; height: ' + height + 'px !important; }',
-								'#adjust-player-miniplayer-resizable { position: absolute; top: 0; z-index: 1; overflow: hidden; resize: both; min-height:100px; min-width:100px;width: ' + width + 'px; height: ' + height + 'px; }',
-								'#adjust-player-miniplayer-resizable.show,#adjust-player-miniplayer-resizable.show .drag { display:block !important; }',
-								'.newfloat #adjust-player-miniplayer-resizable, .mini-player #adjust-player-miniplayer-resizable { z-index: 10000; }',
-							];
-							//console.log(resizableElementWidth + "\n" + resizableElementHeight);
-							var node = document.createElement('style');
-							node.type = 'text/css';
-							node.id = 'adjustMiniPlayerSize';
-							node.appendChild(document.createTextNode(css.join('')));
-							var adjustMiniPlayerSizeCSS = document.querySelector("#adjustMiniPlayerSize");
-							if (adjustMiniPlayerSizeCSS !== null) {
-								adjustMiniPlayerSizeCSS.remove();
-							}
-							document.documentElement.appendChild(node);
-							var player = document.querySelector("#bilibiliPlayer");
-							player.classList.add("mode-miniscreen");
-						};
-
-						if (initResize) {
-							dragEvent(width, Number(width / (16 / 9)).toFixed());
-						}
-
-						function loop() {
-							requestId = undefined;
-							dragEvent(resizableElement.clientWidth, resizableElement.clientHeight);
-							start();
-						}
-
-						function start() {
-							if (!requestId) {
-								requestId = requestAnimationFrame(loop);
-							}
-						}
-
-						function stop() {
-							if (requestId) {
-								cancelAnimationFrame(requestId);
-								requestId = undefined;
-							}
-						}
-						resizableElement.addEventListener("mouseup", function(e) {
-							stop();
-						}, false);
-						resizableElement.addEventListener("mousedown", function(e) {
-							if (e.buttons === 1) {
-								if ((resizableElement.clientWidth - 10) < e.offsetX && (resizableElement.clientHeight - 10) < e.offsetY) {
-									start();
-									loopTimer = window.setTimeout(function() {
-										clearTimeout(this.loopTimer);
-										var resizableElementStyle = resizableElement.getAttribute('class');
-										if (resizableElementStyle === 'show') {
-											var fixUndersize = function() {
-												clearTimeout(loopTimer);
-												resizableElement.setAttribute('style', 'width:320px;height:180px;');
-												start();
-												loopTimer = window.setTimeout(function() {
-													stop();
-												}, 5000);
-											};
-											if (resizableElement.style === '') {
-												fixUndersize();
-											} else {
-												var miniPlayerWidth = miniPlayerDiv.clientWidth;
-												var miniPlayerHeight = miniPlayerDiv.clientHeight;
-												if (matchURL.isWatchlater()) {
-													miniPlayerHeight = miniPlayerHeight - 30;
-												}
-												if (miniPlayerWidth <= 100 || miniPlayerHeight <= 100) {
-													fixUndersize();
-												} else {
-													resizableElement.setAttribute('style', 'width:' + miniPlayerWidth + 'px;height:' + miniPlayerHeight + 'px;');
-													stop();
-												}
-											}
-										} else {
-											stop();
-											miniPlayerHideShow('hide');
-										}
-									}, 3000);
-								} else {
-									doClick(document.querySelector('.bilibili-player-video'));
-								}
-							}
-						}, false);
-					}
-				};
-
-				var miniPlayerHideShow = function(type) {
-					var scrollResizeTimer;
-					var adjustMiniPlayerSizeResizable = document.querySelector("#adjust-player-miniplayer-resizable");
-					if (type === "hide") {
-						var player = document.querySelector("#bilibiliPlayer");
-						player.classList.remove("mode-miniscreen");
-						var adjustMiniPlayerSizeCSS = document.querySelector("#adjustMiniPlayerSize");
-						if (adjustMiniPlayerSizeCSS !== null) {
-							adjustMiniPlayerSizeCSS.remove();
-						}
-						if (adjustMiniPlayerSizeResizable !== null) {
-							adjustMiniPlayerSizeResizable.classList.remove("show");
-							adjustMiniPlayerSizeResizable.setAttribute('style', '');
-						}
-					} else if (type === "show") {
-						if (adjustMiniPlayerSizeResizable !== null) {
-							var miniPlayer = document.querySelector('.mini-player');
-							if (miniPlayer !== null) {
-								adjustMiniPlayerSizeResizable.classList.add("show");
-							}
-						}
-					}
-					scrollResizeTimer = window.setTimeout(function() {
-						clearTimeout(this.scrollResizeTimer);
-						var evt = document.createEvent('Event');
-						evt.initEvent('resize', true, true);
-						querySelectorFromIframe('.bilibili-player-video video').dispatchEvent(evt);
-					}, 800);
-				};
-
-				var miniPlayerHideShowEvent = function() {
-					var initResize = function(isMiniPlayer) {
-						var player = isPlayer();
-						if (player === "html5Player") {
-							if (isMiniPlayer) {
-								if (typeof window.isInitResize === 'undefined' || window.isInitResize === false) {
-									if (typeof isResizable !== 'undefined' && isResizable === 'on') {
-										resizable(isMiniPlayer);
-									} else {
-										resize();
-									}
-									miniPlayerHideShow('show');
-									window.isInitResize = true;
-								}
-							} else {
-								if (typeof window.isInitResize === 'undefined' || window.isInitResize === true) {
-									miniPlayerHideShow('hide');
-									window.isInitResize = false;
-								}
-							}
-						} else {
-							resize();
-						}
-					};
-
-					var observerPlayerElement = document.querySelector('#bofqi');
-					if (matchURL.isNewBangumi()) {
-						observerPlayerElement = document.querySelector('#bangumi_player .bangumi-player');
-					} else if (matchURL.isWatchlater() === true) {
-						observerPlayerElement = document.querySelector('#bilibiliPlayer .bilibili-player-video-wrap');
-					}
-
-					var isMiniPlayer;
-					if (observerPlayerElement.getAttribute("class") !== null && observerPlayerElement.getAttribute("class").search("mini-player") !== -1) {
-						isMiniPlayer = true;
-					} else {
-						isMiniPlayer = false;
-					}
-					initResize(isMiniPlayer);
-
-					var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
-					var observer = new MutationObserver(function(records) {
-						records.map(function(record) {
-							if (record.target.getAttribute("class").search("mini-player") !== -1) {
-								isMiniPlayer = true;
-							} else {
-								isMiniPlayer = false;
-							}
-							initResize(isMiniPlayer);
-						});
-					});
-					observer.observe(observerPlayerElement, {
-						attributes: true,
-						attributeFilter: ['class']
-					});
-				};
-				miniPlayerHideShowEvent();
-			}
-		},
-		autoHideSendbar: function(set, focusDanmakuInput, video) {
-			if (typeof set !== 'undefined') {
-				try {
-					if (querySelectorFromIframe('#adjustPlayerAutoHideSendbar')) {
-						return;
-					}
-
-					//开启了“自动隐藏播放器控制栏”并设置了“定位到弹幕框的快捷键”之后，鼠标移动到弹幕框时不显示“弹幕框”
-					var isFocusDanmakuInput = function() {
-						var css = '';
-						if (focusDanmakuInput) {
-							css = '#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-sendbar, #bilibiliPlayer.mode-widescreen .bilibili-player-video-sendbar { visibility: hidden; }';
-						}
-						return css;
-					};
-
-					var css = [
-						//修改自 https://userstyles.org/styles/131642/bilibili-html5
-						'#bilibiliPlayer.mode-widescreen .bilibili-player-video-bottom-area { position: absolute !important; width: 100% !important;  }',
-						'#bilibiliPlayer.mode-widescreen .bilibili-player-video-info { color:hsla(0,0%,100%,.8); display: none !important; }',
-						'#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-danmaku-setting-wrap, #bilibiliPlayer.mode-widescreen .bilibili-player-video-danmaku-setting-wrap { top: 46px !important; bottom: 0 !important; right: -240px !important; }',
-						'#bilibiliPlayer.mode-webfullscreen .bilibili-player-mode-selection-container, #bilibiliPlayer.mode-widescreen .bilibili-player-mode-selection-container { position: relative; bottom: 0; }',
-						'#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-sendbar, #bilibiliPlayer.mode-widescreen .bilibili-player-video-sendbar { background: rgba(33,33,33,.8) !important; opacity: 0; transition: all .2s ease-in-out; }',
-						'#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-control-bottom-center { position: fixed; width: 100% !important; top: 0 !important; padding: 0 !important; left: 0 !important; }',
-						'#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-sendbar { width: 100% !important; max-width: unset !important; }',
-						'#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-sendbar:hover, #bilibiliPlayer.mode-widescreen .bilibili-player-video-sendbar:hover { opacity: 1; }',
-						isFocusDanmakuInput()
-					];
-					var node = document.createElement('style');
-					node.type = 'text/css';
-					node.id = 'adjustPlayerAutoHideSendbar';
-					node.appendChild(document.createTextNode(css.join('')));
-					querySelectorFromIframe('.player').appendChild(node);
-
-				} catch (e) {
-					console.log('adjustPlayerAutoHideSendbar：' + e);
-				}
-			}
-		},
-		videoSeekingShowSendbar: function(set, video) {
-			if (typeof set !== 'undefined' && video !== null) {
-				video.addEventListener("seeking", function() {
-					var controlBar = querySelectorFromIframe('#bilibiliPlayer .bilibili-player-video-control-wrap');
-					var controlMask = querySelectorFromIframe('#bilibiliPlayer .bilibili-player-video-control-mask');
-					var visibleStyle = "opacity: 1; visibility: visible; ";
-					if (controlBar !== null) {
-						controlBar.style = visibleStyle;
-						controlMask.style = visibleStyle;
-						var timer = null;
-						clearTimeout(this.timer);
-						this.timer = setTimeout(function() {
-							if (controlBar !== null) {
-								controlBar.style = "";
-								controlMask.style = "";
-							}
-						}, 3000);
-					}
-				}, true);
-			}
-		},
-		skipSetTime: function(set, skipTime, video) {
-			if (typeof set !== 'undefined' && video !== null) {
-				var setTime = function() {
-					var vLength = video.duration.toFixed();
-					//console.log(skipTime);
-					try {
-						if (skipTime === 0) {
-							video.currentTime = set;
-						} else if (skipTime > vLength) {
-							return;
-						} else {
-							video.currentTime += skipTime;
-						}
-					} catch (e) {
-						console.log('skipSetTime：' + e);
-					}
-				};
-				setTime();
-			}
-		},
-		shortcuts: function(set) {
-			var shortcut = {
-				playPause: function() {
-					var video = querySelectorFromIframe('.bilibili-player-video video');
-					var button = querySelectorFromIframe('.bilibili-player-video-btn-start');
-					if (video !== null) {
-						if (!video.paused) {
-							doClick(button);
-							shortcut.shortcutsTips("播放/暂停", "暂停");
-						} else {
-							doClick(button);
-							shortcut.shortcutsTips("播放/暂停", "播放");
-						}
-					}
-				},
-				videoFramerate: function(type) {
-					var video = querySelectorFromIframe('.bilibili-player-video video');
-					var framerate = 24;
-					if (video !== null) {
-						var contextMenu = querySelectorFromIframe('.bilibili-player-area > .bilibili-player-video-wrap');
-						contextMenuClick(contextMenu);
-
-						var controlBtn = querySelectorFromIframe('div.bilibili-player-context-menu-container:nth-child(4)');
-						if (controlBtn !== null) {
-							var contextMenuItem = controlBtn.querySelectorAll('li > a'),
-								i;
-							for (i = 0; i < contextMenuItem.length; ++i) {
-								if (contextMenuItem[i].innerHTML === "视频统计信息") {
-									doClick(contextMenuItem[i]);
-									doClick(querySelectorFromIframe('a.bilibili-player-video-info-close'));
-									var fps = querySelectorFromIframe('.bilibili-player-video-info-panel > div[data-name="fps"] .info-data');
-									fps = parseFloat(fps.innerHTML);
-									if (!isNaN(fps)) {
-										framerate = fps;
-									}
-									break;
-								}
-							}
-						}
-						//var currentFrame = Math.floor(video.currentTime * framerate);
-						if (!video.paused) {
-							var button = querySelectorFromIframe('.bilibili-player-video-btn-start');
-							doClick(button);
-						}
-						if (type === "prev") {
-							video.currentTime -= 1 / framerate;
-							shortcut.shortcutsTips("视频帧率", "快退一帧");
-						} else if (type === "next") {
-							video.currentTime += 1 / framerate;
-							shortcut.shortcutsTips("视频帧率", "快进一帧");
-						}
-					}
-				},
-				showHideDanmuku: function() {
-					var controlBtn = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch > input');
-					createMouseoverAndMouseoutEvent('show', controlBtn);
-					createMouseoverAndMouseoutEvent('hide', controlBtn);
-					setTimeout(function() {
-						if (controlBtn !== null) {
-							doClick(controlBtn);
-							var tipsValue = function() {
-								var chooseDanmaku = querySelectorFromIframe('.bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch .choose_danmaku');
-								if (chooseDanmaku.innerHTML === "关闭弹幕") {
-									return "打开弹幕";
-								} else {
-									return "关闭弹幕";
-								}
-							};
-							shortcut.shortcutsTips("弹幕", tipsValue());
-						}
-					}, 200);
-				},
-				videoSpeed: function(type) {
-					var video = querySelectorFromIframe('.bilibili-player-video video');
-					if (video !== null) {
-						var videoSpeed = video.playbackRate;
-						var speed = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 6, 8, 12, 16];
-						switch (type) {
-							case 'add':
-								var addSpeed = Math.max(...speed);
-								if (videoSpeed < addSpeed) {
-									for (var i = 0; i < speed.length; i++) {
-										if (addSpeed > speed[i] && videoSpeed < speed[i]) {
-											addSpeed = speed[i];
-										}
-									}
-									video.playbackRate = addSpeed;
-								}
-								shortcut.shortcutsTips("播放速度", video.playbackRate + "倍速");
-								break;
-							case 'sub':
-								var subSpeed = Math.min(...speed);
-								if (videoSpeed > subSpeed) {
-									for (var i = 0; i < speed.length; i++) {
-										if (subSpeed < speed[i] && videoSpeed > speed[i]) {
-											subSpeed = speed[i];
-										}
-									}
-									video.playbackRate = subSpeed;
-								}
-								shortcut.shortcutsTips("播放速度", video.playbackRate + "倍速");
-								break;
-							case 'reset':
-								if (videoSpeed != 1) {
-									video.playbackRate = 1;
-								}
-								shortcut.shortcutsTips("播放速度", video.playbackRate + "倍速");
-								break;
-							default:
-								console.log("請不要把奇怪的東西插進來");
-								break;
-						}
-						sessionStorage.setItem("adjustPlayer_videoPlaybackRate", video.playbackRate);
-					}
-				},
-				playerWide: function() {
-					var widescreenBtn = querySelectorFromIframe('.bilibili-player-video-btn-widescreen');
-					if (widescreenBtn !== null) {
-						doClick(widescreenBtn);
-					}
-
-					var tipsValue = function() {
-						var screenMode = sessionStorage.getItem("adjustPlayer_screenMode");
-						if (screenMode === "fullscreen") {
-							return "全屏状态下无法使用";
-						} else if (screenMode === "widescreen") {
-							return "退出宽屏";
-						} else {
-							return "进入宽屏";
-						}
-					};
-
-					shortcut.shortcutsTips("宽屏模式", tipsValue());
-				},
-				fullscreen: function() {
-					var controlBtn = querySelectorFromIframe('.bilibili-player-video-btn-fullscreen');
-					if (controlBtn !== null) {
-						doClick(controlBtn);
-
-						var tipsValue = function() {
-							if (isFullscreen()) {
-								return "退出全屏";
-							} else {
-								return "进入全屏";
-							}
-						};
-
-						shortcut.shortcutsTips("全屏", tipsValue());
-					}
-				},
-				webfullscreen: function() {
-					var controlBtn = querySelectorFromIframe('.bilibili-player-video-web-fullscreen > i');
-					if (controlBtn !== null) {
-						doClick(controlBtn);
-
-						var tipsValue = function() {
-							var screenMode = sessionStorage.getItem("adjustPlayer_screenMode");
-							if (screenMode === "webfullscreen") {
-								return "退出网页全屏";
-							} else {
-								return "进入网页全屏";
-							}
-						};
-
-						shortcut.shortcutsTips("网页全屏", tipsValue());
-					}
-				},
-				gotoPlist: function(type) {
-					var video = querySelectorFromIframe('.bilibili-player-video video');
-					if (video !== null) {
-						var plist, nextPlist, prevPlist, curPage;
-						if (matchURL.isVideoAV()) {
-							plist = document.querySelector('#multi_page');
-							curPage = document.querySelector('#multi_page .cur-list .on');
-							if (curPage !== null) {
-								nextPlist = curPage.nextElementSibling;
-								prevPlist = curPage.previousElementSibling;
-							}
-						}
-						if (type === "prev") {
-							if (typeof plist !== 'undefined' && plist !== null) {
-								if (matchURL.isVideoAV()) {
-									if (prevPlist !== null) {
-										prevPlist = prevPlist.querySelector('a[href]');
-									} else {
-										var prevPaging = document.querySelector('#multi_page .paging .on')
-										if (prevPaging !== null) {
-											prevPaging = prevPaging.previousElementSibling;
-											if (prevPaging !== null) {
-												doClick(prevPaging);
-												setTimeout(function() {
-													var curList = document.querySelector('#multi_page .cur-list li:last-child a[href]');
-													doClick(curList);
-												}, 200);
-												return;
-											}
-										}
-									}
-								}
-								var readyState = querySelectorFromIframe('.bilibili-player-video-panel').getAttribute('style');
-								if (readyState !== null) {
-									if (readyState.search("display: none;") !== -1) {
-										doClick(prevPlist);
-										if (prevPlist === null) {
-											shortcut.shortcutsTips("分集切换", "没有上一集了");
-										}
-									} else {
-										return;
-									}
-								}
-							} else {
-								shortcut.shortcutsTips("分集切换", "没有上一集了");
-							}
-						} else if (type === "next") {
-							if (typeof plist !== 'undefined' && plist !== null) {
-								if (matchURL.isVideoAV()) {
-									if (nextPlist !== null) {
-										nextPlist = nextPlist.querySelector('a[href]');
-									} else {
-										var nextPaging = document.querySelector('#multi_page .paging .on');
-										if (nextPaging !== null) {
-											nextPaging = nextPaging.nextElementSibling;
-											if (nextPaging !== null) {
-												doClick(nextPaging);
-												setTimeout(function() {
-													var curList = document.querySelector('#multi_page .cur-list li:first-child a[href]');
-													doClick(curList);
-												}, 200);
-												return;
-											}
-										}
-									}
-								}
-								var readyState = querySelectorFromIframe('.bilibili-player-video-panel').getAttribute('style');
-								if (readyState !== null) {
-									if (readyState.search("display: none;") !== -1) {
-										doClick(nextPlist);
-										if (nextPlist === null) {
-											shortcut.shortcutsTips("分集切换", "没有下一集了");
-										}
-									} else {
-										return;
-									}
-								}
-							} else {
-								shortcut.shortcutsTips("分集切换", "没有下一集了");
-							}
-						}
-					}
-				},
-				videoMute: function() {
-					var controlBtn = querySelectorFromIframe('.bilibili-player-video-btn-volume');
-					if (controlBtn !== null) {
-						doClick(controlBtn.querySelector('.bilibili-player-iconfont-volume'));
-
-						var tipsValue = function() {
-							if (controlBtn.className.search("video-state-volume-min") !== -1) {
-								return "静音";
-							} else {
-								return "恢复静音";
-							}
-						};
-
-						shortcut.shortcutsTips("静音", tipsValue());
-					}
-				},
-				lightOnOff: function() {
-					var isHeimuExist = function() {
-						var flag = false;
-						if (matchURL.isVideoAV() || matchURL.isWatchlater()) {
-							var heimu = document.querySelector('#heimu');
-							if (heimu !== null) {
-								var heimuStyle = heimu.getAttribute("style");
-								if (heimuStyle.search("display: block;") !== -1) {
-									flag = true;
-								}
-							}
-						} else {
-							var heimu = document.querySelector('#heimu');
-							if (heimu !== null) {
-								var heimuStyle = heimu.getAttribute("style");
-								if (heimuStyle !== null) {
-									if (heimuStyle.search("display: block;") !== -1) {
-										flag = true;
-									}
-								}
-							}
-						}
-						return flag;
-					};
-
-					var tipsValue = function() {
-						if (isHeimuExist()) {
-							return "开灯";
-						} else {
-							return "关灯";
-						}
-					};
-
-					adjustPlayer.autoLightOn(true, "ONOFF", shortcut.shortcutsTips("开/关灯", tipsValue()));
-				},
-				loopVideoOnOff: function() {
-					var controlBtn = querySelectorFromIframe('.bilibili-player-video-btn-repeat');
-					if (controlBtn !== null) {
-						doClick(controlBtn);
-
-						setTimeout(function() {
-							var controllTooltip = querySelectorFromIframe('div.player-tooltips');
-							if (controllTooltip !== null) {
-								controllTooltip.style.display = "none";
-							}
-						}, 200);
-
-						var tipsValue = function() {
-							var dataText = controlBtn.querySelector('.bilibili-player-video-btn-repeat span.bilibili-player-iconfont-repeat').getAttribute("data-text");
-							if (dataText !== '关闭洗脑循环') {
-								return "关闭";
-							} else {
-								return "开启";
-							}
-						};
-						shortcut.shortcutsTips("循环播放", tipsValue());
-					}
-				},
-				focusPlayer: function() {
-					var controlBtn = document.body.getAttribute("adjustPlayerScrollToY");
-					if (controlBtn === null) {
-						var scrollToY = (window.pageYOffset || document.documentElement.scrollTop) - (document.documentElement.clientTop || 0);
-						document.body.setAttribute("adjustPlayerScrollToY", scrollToY);
-
-						var setting = window.adjustPlayerSetting;
-						var autoFocusOffsetType = setting.autoFocusPlayerOffsetType;
-						var autoFocusOffsetValue = setting.autoFocusPlayerOffsetValue;
-						adjustPlayer.autoFocusPlayer(true, autoFocusOffsetType, autoFocusOffsetValue, true);
-						shortcut.shortcutsTips("定位", "到播放器顶端");
-
-					} else {
-						var scrollToY = document.body.getAttribute("adjustPlayerScrollToY");
-						unsafeWindow.scrollTo(0, scrollToY);
-
-						shortcut.shortcutsTips("定位", "回到之前位置");
-						document.body.removeAttribute("adjustPlayerScrollToY");
-					}
-				},
-				moveToPlayerFocus: function() {
-					var videoFocus = querySelectorFromIframe('.bilibili-player-video-control');
-					if (videoFocus !== null) {
-						doClick(videoFocus);
-					}
-					shortcut.shortcutsTips("移动", "到播放器焦点");
-				},
-				focusDanmakuInput: function(e) {
-					var controlBtn = querySelectorFromIframe("input.bilibili-player-video-danmaku-input");
-					if (controlBtn !== null) {
-						var adjustPlayerAutoHideControlBar = querySelectorFromIframe("#adjustPlayerAutoHideSendbar");
-						if (adjustPlayerAutoHideControlBar !== null) {
-							var playerVideoControl = querySelectorFromIframe(".bilibili-player-video-control-wrap");
-							playerVideoControl.style = "opacity: 1; visibility: visible";
-
-							var sendbar = querySelectorFromIframe(".bilibili-player-video-sendbar");
-							sendbar.style = "opacity: 1 !important; visibility: visible !important; outline: none;";
-							sendbar.setAttribute("tabindex", "-1");
-
-							var sendbarBlurEvent = function(e) {
-								controlBtn.focus();
-								sendbar.removeEventListener('blur', sendbarBlurEvent, false);
-							};
-							var danmakuInputKeydownEvent = function(e) {
-								if (e.keyCode == 9) {
-									querySelectorFromIframe('.bilibili-player-video video').focus();
-									querySelectorFromIframe(".bilibili-player-video-sendbar").style = "opacity: 1;";
-									querySelectorFromIframe(".bilibili-player-video-control-wrap").style = "";
-									e.preventDefault();
-									controlBtn.removeEventListener('keydown', danmakuInputKeydownEvent, false);
-								}
-							};
-							sendbar.addEventListener("blur", sendbarBlurEvent, false);
-							controlBtn.addEventListener("keydown", danmakuInputKeydownEvent, false);
-						}
-						e.preventDefault();
-
-						setTimeout(function() {
-							controlBtn.focus();
-						}, 200);
-
-						shortcut.shortcutsTips("定位", "到弹幕框焦点");
-					}
-				},
-				shortcutsTips: function(type, value) {
-					try {
-						var timeoutID;
-						clearTimeout(this.timeoutID);
-
-						var tips = querySelectorFromIframe('#bilibiliPlayer > .bilibili-player-area > .bilibili-player-video-wrap > #adjust-player-shortcuts-tips');
-						if (tips === null) {
-							var tipsElement = document.createElement('div');
-							tipsElement.id = "adjust-player-shortcuts-tips";
-							tipsElement.style = "display: block; width:auto; opacity: 0;";
-							tipsElement.className = "bilibili-player-volumeHint";
-							tipsElement.innerHTML = type + ":" + value;
-							querySelectorFromIframe('#bilibiliPlayer > .bilibili-player-area > .bilibili-player-video-wrap ').appendChild(tipsElement);
-							tipsElement.style = "display: block; width:auto; opacity: 1; margin-left:-" + (tipsElement.offsetWidth / 2) + "px";
-						} else {
-							tips.innerHTML = type + ":" + value;
-							tips.style = "display: block; width:auto; opacity: 1; margin-left:-" + (tips.offsetWidth / 2) + "px";
-						}
-
-						this.timeoutID = setTimeout(function() {
-							var adjustPlayerShortcutsTips = querySelectorFromIframe('#bilibiliPlayer > .bilibili-player-area > .bilibili-player-video-wrap > #adjust-player-shortcuts-tips');
-							if (adjustPlayerShortcutsTips !== null) {
-								adjustPlayerShortcutsTips.style = "display: block;width:auto;opacity: 0;";
-							}
-						}, 1000);
-					} catch (e) {
-						console.log('shortcutsTips：' + e);
-					}
-				},
-				shortcutsEvent: function(type, kCode, event) {
-					if (typeof kCode === 'undefined' || kCode === "" || kCode === null) {
-						return;
-					}
-
-					var isCombinationKey = function() {
-						var keys = kCode.split("+");
-						if (keys.length > 1) {
-							keys[1] = parseInt(keys[1]);
-							return {
-								CombinationKey: true,
-								keys: keys
-							};
-						} else {
-							return {
-								CombinationKey: false,
-								keys: parseInt(kCode)
-							};
-						}
-					};
-
-					var executeEvent = function() {
-						switch (type) {
-							case "playPause":
-								shortcut.playPause();
-								break;
-							case "prevVideoFramerate":
-								shortcut.videoFramerate("prev");
-								break;
-							case "nextVideoFramerate":
-								shortcut.videoFramerate("next");
-								break;
-							case "showHideDanmuku":
-								shortcut.showHideDanmuku();
-								break;
-							case "addVideoSpeed":
-								shortcut.videoSpeed("add");
-								break;
-							case "subVideoSpeed":
-								shortcut.videoSpeed("sub");
-								break;
-							case "resetVideoSpeed":
-								shortcut.videoSpeed("reset");
-								break;
-							case "playerWide":
-								shortcut.playerWide();
-								break;
-							case "fullscreen":
-								shortcut.fullscreen();
-								break;
-							case "webfullscreen":
-								shortcut.webfullscreen();
-								break;
-							case "prevPlist":
-								shortcut.gotoPlist("prev");
-								break;
-							case "nextPlist":
-								shortcut.gotoPlist("next");
-								break;
-							case "videoMute":
-								shortcut.videoMute();
-								break;
-							case "lightOnOff":
-								shortcut.lightOnOff();
-								break;
-							case "loopVideoOnOff":
-								shortcut.loopVideoOnOff();
-								break;
-							case "focusPlayer":
-								shortcut.focusPlayer();
-								break;
-							case "moveToPlayerFocus":
-								shortcut.moveToPlayerFocus();
-								break;
-							case "focusDanmakuInput":
-								shortcut.focusDanmakuInput(event);
-								break;
-							default:
-								break;
-						}
-					};
-
-					var k = isCombinationKey(kCode);
-					if (k.CombinationKey) {
-						if (event.ctrlKey || event.altKey || event.shiftKey) {
-							if (k.keys[0] === "shift") {
-								if (event.shiftKey && event.keyCode === k.keys[1]) {
-									executeEvent(type);
-									return;
-								}
-							} else if (k.keys[0] === "ctrl") {
-								if (event.ctrlKey && event.keyCode === k.keys[1]) {
-									executeEvent(type);
-									return;
-								}
-							} else if (k.keys[0] === "alt") {
-								if (event.altKey && event.keyCode === k.keys[1]) {
-									executeEvent(type);
-									return;
-								}
-							}
-						}
-					} else {
-						if (event.ctrlKey || event.altKey || event.shiftKey) {
-							return;
-						} else {
-							if (event.keyCode === k.keys) {
-								executeEvent(type);
-								return;
-							}
-						}
-					}
-				},
-				init: function(set) {
-					if (typeof set !== 'undefined') {
-						try {
-							if (typeof set.shortcutsHideTips !== 'undefined') {
-								var css = [
-									'#adjust-player-shortcuts-tips{display: none!important;}'
-								];
-								//console.log(resizableElementWidth + "\n" + resizableElementHeight);
-								var node = document.createElement('style');
-								node.type = 'text/css';
-								node.id = 'showTips';
-								node.appendChild(document.createTextNode(css.join('')));
-								var showTipsCSS = document.querySelector("#showTips");
-								if (showTipsCSS !== null) {
-									showTipsCSS.remove();
-								}
-								node.appendChild(document.createTextNode(css.join('')));
-								document.documentElement.appendChild(node);
-							}
-							if (set.shortcutsSwitch !== true) {
-								return;
-							}
-
-							var shortcutsEventObj = {};
-							for (var prop in set) {
-								if (set.hasOwnProperty(prop)) {
-									var KeyCode = prop.indexOf('KeyCode');
-									if (KeyCode !== -1) {
-										shortcutsEventObj[set[prop]] = prop.replace(/KeyCode/gi, '');
-									}
-								}
-							}
-
-							function bindEvent(event) {
-								//console.log(shortcutsEventObj);
-								if (event.target.nodeName === "INPUT") {
-									return;
-								}
-								if (event.target.nodeName === "TEXTAREA") {
-									return;
-								}
-
-								var focused = document.activeElement;
-								if (focused.nodeName === "IFRAME") {
-									window.top.focus();
-								}
-
-								if (set.shortcutsVolumeSeekingGlobal === true) {
-									//arrowKeys
-									if (event.keyCode === 37 || event.keyCode === 38 || event.keyCode === 39 || event.keyCode === 40) {
-										//event.stopPropagation();
-										var videoFocus = function() {
-											var videoControl = querySelectorFromIframe('.bilibili-player-video-control');
-											if (videoControl !== null) {
-												doClick(videoControl);
-											}
-										};
-										videoFocus();
-									}
-								}
-
-								if (event.shiftKey) {
-									var shiftEventName = shortcutsEventObj['shift+' + event.keyCode];
-									if (typeof shiftEventName !== 'undefined') {
-										shiftEventName = shiftEventName.replace(/shift\+/gi, '');
-										if (set[shiftEventName] === true) {
-											shortcut.shortcutsEvent(shiftEventName, set[shiftEventName + 'KeyCode'], event);
-											return;
-										}
-									}
-								}
-								if (event.ctrlKey) {
-									var ctrlEventName = shortcutsEventObj['ctrl+' + event.keyCode];
-									if (typeof ctrlEventName !== 'undefined') {
-										ctrlEventName = ctrlEventName.replace(/ctrl\+/gi, '');
-										if (set[ctrlEventName] === true) {
-											shortcut.shortcutsEvent(ctrlEventName, set[ctrlEventName + 'KeyCode'], event);
-											return;
-										}
-									}
-								}
-								if (event.altKey) {
-									var altEventName = shortcutsEventObj['alt+' + event.keyCode];
-									if (typeof altEventName !== 'undefined') {
-										altEventName = altEventName.replace(/alt\+/gi, '');
-										if (set[altEventName] === true) {
-											shortcut.shortcutsEvent(altEventName, set[altEventName + 'KeyCode'], event);
-											return;
-										}
-									}
-								}
-
-								var eventName = shortcutsEventObj[event.keyCode];
-								if (typeof eventName !== 'undefined') {
-									if (set[eventName] === true) {
-										shortcut.shortcutsEvent(eventName, set[eventName + 'KeyCode'], event);
-										return;
-									}
-								}
-							}
-
-							var iframe = document.querySelector('iframe.bilibiliHtml5Player');
-							if (iframe !== null) {
-								iframe.contentWindow.document.addEventListener("keydown", bindEvent, false);
-							}
-							document.addEventListener("keydown", bindEvent, false);
-						} catch (e) {
-							console.log('shortcuts：' + e);
-						}
-					}
-				}
-			};
-			shortcut.init(set);
-		},
-		adjust: function(setting, isReload) {
-			var video = querySelectorFromIframe('.bilibili-player-video video');
-			//给老版本初始化“双击全屏延时”的默认值
-			if (setting.doubleClickFullScreen === true && typeof setting.doubleClickFullScreenDelayed === 'undefined') {
-				adjustPlayer.doubleClickFullScreen(setting.doubleClickFullScreen, 200);
-			} else {
-				adjustPlayer.doubleClickFullScreen(setting.doubleClickFullScreen, setting.doubleClickFullScreenDelayed);
-			}
-			//初始化“迷你播放器尺寸”的默认值
-			if (setting.resizePlayer === true && typeof setting.resizeMiniPlayer === 'undefined') {
-				adjustPlayer.resizeMiniPlayer(true, 320);
-			} else {
-				adjustPlayer.resizeMiniPlayer(setting.resizeMiniPlayer, setting.resizeMiniPlayerSize, setting.resizeMiniPlayerSizeResizable);
-			}
-			//修复没开启“自动宽屏模式”自动关灯失效
-			setTimeout(function() {
-				adjustPlayer.autoLightOn(setting.autoLightOn);
-			}, 200);
-			//“隐藏弹幕”最后执行
-			var danmakuSettingLitePanel = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-setting .bp-svgicon');
-			createMouseoverAndMouseoutEvent('show', danmakuSettingLitePanel).then(function(value) {
-				if (value === 'show') {
-					Promise.all([
-						adjustPlayer.hideDanmukuFilterType(setting.hideDanmukuFilterType, setting.hideDanmukuFilterType_Type),
-						adjustPlayer.danmukuPreventShade(setting.danmukuPreventShade, setting.danmukuPreventShadeType)
-					]).then(function(values) {
-						createMouseoverAndMouseoutEvent('hide', danmakuSettingLitePanel).then(function(value) {
-							if (value === 'hide') {
-								adjustPlayer.hideDanmuku(setting.hideDanmuku, setting.hideDanmukuType);
-							}
-						});
-					});
-				}
-			});
-			adjustPlayer.autoLoopVideo(setting.autoLoopVideo);
-			adjustPlayer.tabDanmulist(setting.tabDanmulist);
-			adjustPlayer.videoSeekingShowSendbar(setting.videoSeekingShowSendbar, video);
-			adjustPlayer.autoHideSendbar(setting.autoHideSendbar, setting.shortcuts.focusDanmakuInput, video);
-			adjustPlayer.autoPlay(setting.autoPlay, video);
-			adjustPlayer.autoVideoSpeed(setting.autoVideoSpeed, setting.autoVideoSpeedValue, video);
-			adjustPlayer.skipSetTime(setting.skipSetTime, setting.skipSetTimeValue, video);
-			adjustPlayer.autoNextPlist(setting.autoNextPlist);
-
-			if (isReload) {
-				var screenMode = sessionStorage.getItem("adjustPlayer_screenMode");
-				setTimeout(function() {
-					if (screenMode === 'widescreen') {
-						adjustPlayer.fixWidescreenFocusPlayer(setting, isReload, adjustPlayer.autoWidescreen);
-						adjustPlayer.autoFocusPlayer(setting.autoFocusPlayer, setting.autoFocusPlayerOffsetType, setting.autoFocusPlayerOffsetValue);
-					} else if (screenMode === 'webfullscreen') {
-						adjustPlayer.autoWebFullScreen(true);
-					} else if (screenMode === 'normal') {
-						adjustPlayer.autoFocusPlayer(setting.autoFocusPlayer, setting.autoFocusPlayerOffsetType, setting.autoFocusPlayerOffsetValue);
-					}
-					adjustPlayer.resizePlayer(setting.resizePlayer, setting.resizePlayerWidth, setting.resizePlayerRatio, setting.resizePlayerVideoInfoAndUpInfoPosition, setting.autoHideSendbar);
-				}, 800);
-			} else {
-				if (setting.autoWebFullScreen === true) {
-					adjustPlayer.autoWebFullScreen(setting.autoWebFullScreen);
-				} else {
-					//开启“网页全屏”后，不加载的功能
-					adjustPlayer.fixWidescreenFocusPlayer(setting, isReload, adjustPlayer.autoWidescreen);
-					adjustPlayer.autoFocusPlayer(setting.autoFocusPlayer, setting.autoFocusPlayerOffsetType, setting.autoFocusPlayerOffsetValue);
-					adjustPlayer.resizePlayer(setting.resizePlayer, setting.resizePlayerWidth, setting.resizePlayerRatio, setting.resizePlayerVideoInfoAndUpInfoPosition, setting.autoHideSendbar);
-				}
-				adjustPlayer.shortcuts(setting.shortcuts);
-			}
-		},
-		init: function(firstrun, setting) {
-			unsafeWindow.adjustPlayerTest = true;
-			window.adjustPlayerSetting = setting;
-			//修复后台打开视频页面脚本加载失效
-			var documentState = document.visibilityState;
-			if (documentState === "visible") {
-				//初始化
-				console.log('adjustPlayer(ver.stardust):\n' + 'loadPage:' + location.href);
-				//显示帮助提示
-				var isFirstrun = function() {
-					if (firstrun) {
-						config.setValue('player_firstrun', false);
-						configWindow.help();
-					}
-				};
-				//总计时器
-				var timerCount = 0;
-				var timer = window.setInterval(function callback() {
-					var player = isPlayer();
-					if (player === "flashPlayer") {
-						configWindow.help();
-						clearInterval(timer);
-					} else if (player === "html5Player") {
-
-						var stardustPlayer = document.querySelector('#entryOld');
-						if (stardustPlayer === null) {
-							clearInterval(timer);
-							console.log('adjustPlayer(ver.stardust):\n旧版播放器页面不支持\n');
-							return;
-						}
-
-						var readyState = querySelectorFromIframe('.bilibili-player-video-panel');
-						var video = querySelectorFromIframe('.bilibili-player-video video');
-						var isReload = false;
-						if (video !== null && readyState !== null) {
-							if (readyState.getAttribute('style') !== null && readyState.getAttribute('style').search("display: none;") !== -1) {
-								try {
-									createConfigBtn();
-									isFirstrun();
-									adjustPlayer.adjust(setting, isReload);
-									reloadPList.init();
-									console.log('adjustPlayer(ver.stardust):\nhtml5Player init success');
-								} catch (e) {
-									clearInterval(timer);
-									console.log('adjustPlayer(ver.stardust):\nhtml5Player init error\n' + e);
-								} finally {
-									reloadPList.getScreenMode();
-									clearInterval(timer);
-								}
-							}
-						} else {
-							//console.log(timerCount);
-							timerCount++;
-							if (timerCount >= 120) {
-								timerCount = 0;
-								clearInterval(timer);
-								console.log('adjustPlayer(ver.stardust):\n html5Player init error: not find video');
-							}
-						}
-					} else {
-						//console.log(timerCount);
-						timerCount++;
-						if (timerCount >= 120) {
-							timerCount = 0;
-							clearInterval(timer);
-							console.log('adjustPlayer(ver.stardust):\n html5Player init error: timeout');
-						}
-					}
-				}, 800);
-			} else if (documentState === "hidden") {
-				//修复后台打开视频页面脚本加载失效
-				var hidden, visibilityChange;
-				if (typeof document.hidden !== "undefined") {
-					hidden = "hidden";
-					visibilityChange = "visibilitychange";
-				} else if (typeof document.msHidden !== "undefined") {
-					hidden = "msHidden";
-					visibilityChange = "msvisibilitychange";
-				} else if (typeof document.webkitHidden !== "undefined") {
-					hidden = "webkitHidden";
-					visibilityChange = "webkitvisibilitychange";
-				}
-
-				function visibilitychangeEvent() {
-					if (typeof document.addEventListener === "undefined" || typeof document[hidden] === "undefined") {
-						console.log("adjustPlayer:\n nonsupport the Page Visibility API.");
-					} else {
-						if (document.visibilityState === "visible") {
-							init();
-							document.removeEventListener(visibilityChange, visibilitychangeEvent, false);
-						}
-					}
-				}
-				document.addEventListener(visibilityChange, visibilitychangeEvent, false);
-			} else {
-				console.log("adjustPlayer:\n nonsupport the Page Visibility API.");
-			}
-		},
-		reload: function(setting) {
-			//多P页面重加载
-			console.log('adjustPlayer(ver.stardust):\n' + 'reloadPage:' + location.href);
-			//总计时器
-			var timerCount = 0;
-			var timer = window.setInterval(function callback() {
-				var player = isPlayer();
-				if (player === "flashPlayer") {
-					try {
-						setTimeout(function() {
-							createConfigBtn();
-							configWindow.help();
-						}, 1000);
-						console.log('adjustPlayer(ver.stardust):\nflashPlayer init success');
-					} catch (e) {
-						clearInterval(timer);
-						console.log('adjustPlayer(ver.stardust):\nflashPlayer init error\n' + e);
-					} finally {
-						clearInterval(timer);
-					}
-				} else if (player === "html5Player") {
-					var readyState = querySelectorFromIframe('.bilibili-player-video-panel');
-					var video = querySelectorFromIframe('.bilibili-player-video video');
-					var isReload = true;
-					if (video !== null && readyState !== null) {
-						if (readyState.getAttribute('style') !== null && readyState.getAttribute('style').search("display: none;") !== -1) {
-							try {
-								createConfigBtn();
-								adjustPlayer.adjust(setting, isReload);
-								reloadPList.init();
-								console.log('adjustPlayer(ver.stardust):\nhtml5Player reload success');
-							} catch (e) {
-								clearInterval(timer);
-								console.log('adjustPlayer(ver.stardust):\nhtml5Player reload error\n' + e);
-							} finally {
-								reloadPList.getScreenMode();
-								clearInterval(timer);
-							}
-						}
-					} else {
-						//console.log(timerCount);
-						timerCount++;
-						if (timerCount >= 120) {
-							timerCount = 0;
-							clearInterval(timer);
-							console.log('adjustPlayer(ver.stardust):\n html5Player reload error: not find video');
-						}
-					}
-				} else {
-					//console.log(timerCount);
-					timerCount++;
-					if (timerCount >= 120) {
-						timerCount = 0;
-						clearInterval(timer);
-						console.log('adjustPlayer(ver.stardust):\n html5Player reload error: timeout');
-					}
-				}
-			}, 800);
-		}
-	};
-	var reloadPList = {
-		getPListId: function(href) {
-			var id;
-			if (typeof href !== 'undefined') {
-				id = href.match(/p=\d*/g) || href.match(/#page=\d*/g) || href.match(/ep\d*/g) || href.match(/ss\d*#\d*/g) || href.match(/watchlater\/#\/av\d*\/p\d*/g) || href.match(/av\d*/g);
-				if (id !== null) {
-					id = id[0].replace(/\D/g, '');
-				} else {
-					id = '';
-				}
-			}
-			return id;
-		},
-		getScreenMode: function() {
-			var player = isPlayer();
-			if (player === "html5Player") {
-				var screenMode = 'normal';
-				var player = querySelectorFromIframe('#bilibiliPlayer').getAttribute("class");
-				if (player !== null) {
-					if (player.search("widescreen") !== -1) {
-						screenMode = 'widescreen';
-					} else if (player.search("webfullscreen") !== -1) {
-						screenMode = 'webfullscreen';
-					} else if (player.search("fullscreen") !== -1) {
-						screenMode = 'fullscreen';
-					} else {
-						screenMode = 'normal';
-					}
-				}
-				sessionStorage.setItem("adjustPlayer_screenMode", screenMode);
-			}
-		},
-		init: function() {
-		    (function(history){
-			var pushState = history.pushState;
-			history.pushState = function(state) {
-			    if (typeof history.onpushstate == "function") {
-				history.onpushstate({state: state});
-			    }
-			    return pushState.apply(history, arguments);
-			};
-		    })(window.history);
-
-		    var pListId = reloadPList.getPListId(location.href);
-				window.adjustPlayerCurrentPListId = pListId;
-
-		    window.onpopstate = history.onpushstate = function(e) {
-			var isReload = false;
-			var reloadTimer = null;
-			clearTimeout(this.reloadTimer);
-			this.reloadTimer = window.setTimeout(function() {
-			    if (isReload === false) {
-				var newPlistId, oldPListId;
-				newPlistId = reloadPList.getPListId(location.href);
-				oldPListId = window.adjustPlayerCurrentPListId;
-				if (newPlistId !== oldPListId) {
-				    console.log('reloadPList:\nnewPlistId:' + newPlistId + "\noldPListId:" + oldPListId);
-				    isReload = true;
-				    if (typeof GM_getValue === 'function') {
-					var setting = config.read();
-					adjustPlayer.reload(setting);
-				    } else {
-					var setting = config.read();
-					setting.then(function(value) {
-					    adjustPlayer.reload(value);
-					});
-				    }
-				} else {
-				    reloadPList.getScreenMode();
-				}
-			    } else {
-				return;
-			    }
-			}, 200);
-		    }
-		}
-	};
-	var config = {
-		storageType: function() {
-			if (window.localStorage) {
-				var type = localStorage.getItem('adjustPlayer_storageType');
-				if (type === "localStorage") {
-					return "localStorage";
-				} else if (type === null || type === "extension") {
-					return "extension";
-				} else {
-					return "unknown";
-				}
-			} else {
-				console.log("adjustPlayer:获取设置失败，不支持localStorage");
-			}
-		},
-		getValue: function(value, defalutValue) {
-			var storageType = config.storageType();
-			if (storageType === "localStorage") {
-				var item;
-				if (typeof defalutValue !== "undefined" && item === null) {
-					item = localStorage.getItem('adjustPlayer_localStorage_' + value);
-					localStorage.setItem('adjustPlayer_localStorage_' + value, defalutValue);
-				} else {
-					item = localStorage.getItem('adjustPlayer_localStorage_' + value);
-				}
-				item = JSON.parse(item);
-				return item;
-			} else if (storageType === "extension") {
-				if (typeof GM_getValue === 'function') {
-					var item;
-					if (typeof defalutValue !== 'undefined') {
-						item = GM_getValue(value, defalutValue);
-					} else {
-						item = GM_getValue(value);
-					}
-					return item;
-				} else {
-					if (typeof defalutValue !== 'undefined') {
-						return GM.getValue(value, defalutValue);
-					} else {
-						return GM.getValue(value);
-					}
-				}
-			} else {
-				console.log("adjustPlayer:读取" + value + "失败，未知存储类型");
-				item = null;
-				return item;
-			}
-		},
-		setValue: function(name, value) {
-			var storageType = config.storageType();
-			if (storageType === "localStorage") {
-				value = JSON.stringify(value);
-				localStorage.setItem('adjustPlayer_localStorage_' + name, value);
-			} else if (storageType === "extension") {
-				if (typeof GM_getValue === 'function') {
-					GM_setValue(name, value);
-				} else {
-					GM.setValue(name, value);
-				}
-			} else {
-				console.log("adjustPlayer:设置" + value + "失败，未知存储类型");
-			}
-		},
-		read: function() {
-			if (typeof GM_getValue === 'function') {
-				var adjustPlayerSetting = config.getValue('player_adjustPlayer');
-				if (typeof adjustPlayerSetting !== "undefined" && adjustPlayerSetting !== null) {
-					return adjustPlayerSetting;
-				} else {
-					var defaultConfig = config.restore();
-					if (defaultConfig !== null) {
-						return defaultConfig;
-					} else {
-						console.log("adjustPlayer:读取设置失败");
-					}
-				}
-			} else {
-				return new Promise(function(resolve, reject) {
-					var adjustPlayerSetting = config.getValue('player_adjustPlayer');
-					adjustPlayerSetting.then(function(value) {
-						if (typeof value !== "undefined" && value !== null) {
-							resolve(value);
-						} else {
-							var defaultConfig = config.restore();
-							defaultConfig.then(function(value) {
-								if (value !== null) {
-									resolve(value);
-								} else {
-									console.log("adjustPlayer:读取设置失败");
-								}
-							});
-						}
-					});
-				});
-			}
-		},
-		write: function(adjustPlayer) {
-			config.setValue('player_adjustPlayer', adjustPlayer);
-		},
-		restore: function() {
-			var defalutConfig = '{ "shortcuts": {} }';
-			config.setValue('player_adjustPlayer', JSON.parse(defalutConfig));
-			config.setValue('player_firstrun', true);
-			if (typeof GM_getValue === 'function') {
-				var item = config.getValue('player_adjustPlayer');
-				return item;
-			} else {
-				return new Promise(function(resolve, reject) {
-					var item = config.getValue('player_adjustPlayer');
-					item.then(function(value) {
-						resolve(value);
-					});
-				});
-			}
-		}
-	};
-	var dialog = {
-		create: function(name, title, bar, content, isModal) {
-			var isExist = document.querySelector('#adjust-player > #' + name);
-			if (isExist === null) {
-				var dialogElement = document.createElement('div');
-				dialogElement.id = name;
-				dialogElement.className = 'dialog';
-				dialogElement.innerHTML = '<div class="title">' + title + '' + bar + '</div>' + content;
-				if (isModal != null) {
-					dialogElement.setAttribute("isModal", "true");
-					dialogElement.setAttribute("modalParentId", isModal.getAttribute("id"));
-					isModal.classList.add("modalWindow");
-				}
-				document.querySelector('#adjust-player').appendChild(dialogElement);
-				dialog.eventBinding(dialogElement, name);
-				//mask
-				document.querySelector('#adjust-player .adjust-player-mask').setAttribute("style", "display: block;");
-			}
-		},
-		close: function(element) {
-			if (element.getAttribute('isModal') === "true") {
-				var modalParent = document.querySelector('#' + element.getAttribute('modalParentId') + '');
-				if (modalParent !== null) {
-					modalParent.classList.remove("modalWindow");
-				}
-			}
-			document.querySelector('#adjust-player').removeChild(element);
-			//mask
-			var adjustPlayer = document.querySelectorAll('#adjust-player > div.dialog').length;
-			if (adjustPlayer < 1) {
-				document.querySelector('#adjust-player .adjust-player-mask').removeAttribute("style");
-			}
-		},
-		eventBinding: function(element, name) {
-			element.addEventListener('mouseover', function(e) {
-				var adjustPlayerTooltip = document.querySelector('#adjust-player-tooltip');
-				var tooltip = e.target.getAttribute('tooltip');
-				if (e.target && tooltip !== null) {
-					var left = e.clientX;
-					var top = e.clientY;
-					if (adjustPlayerTooltip === null) {
-						var tooltipElement = document.createElement('div');
-						tooltipElement.id = "adjust-player-tooltip";
-						tooltipElement.style = 'left: ' + left + 'px;top: ' + top + 'px;margin:10px 0 0 -80px;color: #222;font-size:12px;line-height: 16px;text-align: left;display: block;position: fixed;background: #fff;border-radius: 4px;box-shadow: 0px 0px 1px 0px;width: 200px;overflow-wrap: break-word;padding: 4px;z-index: 999999;';
-						tooltipElement.innerHTML = tooltip.replace(/\n/g, "<br/>");
-						document.querySelector('#adjust-player').appendChild(tooltipElement);
-					} else {
-						adjustPlayerTooltip.style = 'left: ' + left + 'px;top: ' + top + 'px;margin:10px 0 0 -80px;color: #222;font-size:12px;line-height: 16px;text-align: left;display: block;position: fixed;background: #fff;border-radius: 4px;box-shadow: 0px 0px 1px 0px;width: 200px;overflow-wrap: break-word;padding: 4px;z-index: 999999;';
-						adjustPlayerTooltip.innerHTML = tooltip.replace(/\n/g, "<br/>");
-					}
-				} else {
-					if (adjustPlayerTooltip !== null) {
-						adjustPlayerTooltip.style = '';
-						adjustPlayerTooltip.innerHTML = '';
-					}
-				}
-			});
-			element.addEventListener('click', function(e) {
-				var action = e.target.getAttribute('action');
-				if (e.target && action !== null) {
-					if (name === "main") {
-						switch (action) {
-							case 'shortcuts':
-								configWindow.shortcutsWindow(e);
-								break;
-							case 'adjustPlayerSize':
-								configWindow.adjustPlayerSize();
-								break;
-							case 'restoreDef':
-								configWindow.restore();
-								break;
-							case 'save':
-								configWindow.save();
-								break;
-							case 'childElementDisabledEvent':
-								configWindow.childElementDisabledEvent(e.target.getAttribute("name"), e.target.getAttribute("disabledchildelement"));
-								break;
-							case 'storageType':
-								configWindow.storageTypeWindow(e);
-								break;
-							default:
-								break;
-						}
-					} else if (name === "shortcutsSetting") {
-						switch (action) {
-							case 'clear':
-								configWindow.shortcutsSettingClear();
-								break;
-							case 'save':
-								configWindow.shortcutsSettingSave();
-								break;
-							case 'cancel':
-								configWindow.shortcutsSettingCancel();
-								break;
-							default:
-								break;
-						}
-					} else if (name === "storageType") {
-						switch (action) {
-							case 'save':
-								configWindow.storageTypeSave();
-								break;
-							case 'cancel':
-								dialog.close(this);
-								break;
-							default:
-								break;
-						}
-					}
-					switch (action) {
-						case 'help':
-							configWindow.help();
-							break;
-						case 'close':
-							dialog.close(this);
-							break;
-						default:
-							break;
-					}
-				}
-			});
-		}
-	};
-	var configWindow = {
-		create: function() {
-			var name = 'main';
-			var title = '哔哩哔哩播放器调整';
-			var bar = '<span class="btn" action="help">?</span><span class="btn" action="close">X</span>';
-			var content = commentToString(function() {
-				/*
+    'use strict';
+    var adjustPlayer = {
+        autoWidescreen: function(set, fullscreen) {
+            if (typeof set !== 'undefined') {
+                var autoWidescreen = function() {
+                    var widescreenBtn = querySelectorFromIframe('.bilibili-player-video-btn-widescreen');
+                    if (widescreenBtn !== null) {
+                        var screenMode = sessionStorage.getItem("adjustPlayer_screenMode");
+                        if (screenMode !== "widescreen") {
+                            doClick(widescreenBtn);
+                        }
+                    }
+                };
+                autoWidescreen();
+                if (typeof fullscreen !== 'undefined') {
+                    if (fullscreen === 'on') {
+                        function fullscreenEvent(e) {
+                            var element = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+                            if (typeof element === 'undefined') {
+                                autoWidescreen();
+                            }
+                        }
+                        document.addEventListener("fullscreenchange", fullscreenEvent);
+                        document.addEventListener("webkitfullscreenchange", fullscreenEvent);
+                        document.addEventListener("mozfullscreenchange", fullscreenEvent);
+                        document.addEventListener("MSFullscreenChange", fullscreenEvent);
+                    }
+                }
+            }
+        },
+        fixWidescreenFocusPlayer: function(setting, isReload, autoWidescreenCallback) {
+            var timerCount = 0;
+            var timer = window.setInterval(function() {
+                if (timerCount >= 20) {
+                    clearInterval(timer);
+                }
+                timerCount++;
+                if (typeof unsafeWindow.PlayerAgent !== 'undefined') {
+                    if (typeof unsafeWindow.PlayerAgent.player_widewin !== 'undefined') {
+                        //console.log(unsafeWindow.PlayerAgent.player_widewin);
+                        clearInterval(timer);
+                        fixWidescreenFocusPlayer();
+                    }
+                }
+            }, 200);
+
+            var fixWidescreenFocusPlayer = function() {
+                var callback = function() {
+                    if (typeof autoWidescreenCallback === 'function') {
+                        if (isReload) {
+                            autoWidescreenCallback(true, setting.autoWidescreenFullscreen);
+                        } else {
+                            autoWidescreenCallback(setting.autoWidescreen, setting.autoWidescreenFullscreen);
+                        }
+                    }
+                };
+
+                if (setting.autoFocusPlayer) {
+                    //unsafeWindow.PlayerAgent.player_widewin = null;
+                    callback();
+                    //adjustPlayer.autoFocusPlayer(true, setting.autoFocusPlayerOffsetType, setting.autoFocusPlayerOffsetValue);
+                    return;
+                } else if (setting.resizePlayer) {
+                    unsafeWindow.PlayerAgent.player_widewin = function() {
+                        adjustPlayer.autoFocusPlayer(true, setting.autoFocusPlayerOffsetType, setting.autoFocusPlayerOffsetValue);
+                    };
+                    callback();
+                    return;
+                } else {
+                    callback();
+                }
+            };
+        },
+        autoFocusPlayer: function(set, offsetType, offsetValue, isShortcut) {
+            if (typeof set !== 'undefined') {
+                try {
+                    var focusPlayer = function() {
+                        setTimeout(function() {
+                            var playerWrapper;
+                            var scrollToY;
+                            if (matchURL.isVideoAV()) {
+                                playerWrapper = document.querySelector('#bofqi > .player');
+                                scrollToY = playerWrapper.offsetTop;
+                            }
+                            if (typeof offsetValue !== 'undefined' && typeof offsetType !== 'undefined') {
+                                if (offsetType === "add") {
+                                    scrollToY += offsetValue;
+                                } else if (offsetType === "sub") {
+                                    scrollToY -= offsetValue;
+                                }
+                            }
+                            if (typeof offsetValue === 'undefined') {
+                                scrollToY -= 10;
+                            }
+                            var currentScrollToY = (window.pageYOffset || document.documentElement.scrollTop) - (document.documentElement.clientTop || 0);
+                            var playerHeight = playerWrapper.offsetHeight;
+                            var playerOffsetTop = playerWrapper.offsetTop;
+                            if (currentScrollToY >= (playerHeight + playerOffsetTop) && isShortcut !== true) {
+                                return;
+                            } else {
+                                unsafeWindow.scrollTo(0, scrollToY);
+                            }
+                        }, 200);
+                    };
+                    var timerCount = 0;
+                    var timer = window.setInterval(function() {
+                        if (timerCount >= 20) {
+                            clearInterval(timer);
+                        }
+                        timerCount++;
+
+                        var screenMode = sessionStorage.getItem("adjustPlayer_screenMode");
+                        if (screenMode == 'widescreen') {
+                            var widescreenReady = document.querySelector('.player-mode-widescreen')
+                            if (widescreenReady !== null) {
+                                if (isShortcut) {
+                                    unsafeWindow.scrollTo(0, 0);
+                                    focusPlayer();
+                                } else {
+                                    focusPlayer();
+                                }
+                                clearInterval(timer);
+                            }
+                        } else {
+                            if (isShortcut) {
+                                unsafeWindow.scrollTo(0, 0);
+                                focusPlayer();
+                            } else {
+                                focusPlayer();
+                            }
+                            clearInterval(timer);
+                        }
+                    }, 200);
+                } catch (e) {
+                    console.log('autoFocus：' + e);
+                }
+            }
+        },
+        autoPlay: function(set, video) {
+            if (typeof set !== 'undefined' && video !== null) {
+                if (video.play) {
+                    video.play();
+                }
+            }
+        },
+        chooseQuality: function(set, video) {
+            if (typeof set !== 'undefined' && video !== null) {
+                if (video.play) {
+                    video.play();
+                }
+            }
+        },
+        hideDanmuku: function(set, type) {
+            if (typeof set !== 'undefined') {
+                var hideDanmuku = function() {
+                    var controlBtn = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch > input');
+                    if (controlBtn !== null) {
+
+                        createMouseoverAndMouseoutEvent('show', controlBtn);
+                        createMouseoverAndMouseoutEvent('hide', controlBtn);
+
+                        var chooseDanmaku = querySelectorFromIframe('.bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch .choose_danmaku');
+                        if (chooseDanmaku.innerHTML === "关闭弹幕") {
+                            doClick(controlBtn);
+                            console.log("hide danmu");
+                        }
+                    }
+                };
+
+                if (typeof type !== 'undefined') {
+                    if (type === "all") {
+                        hideDanmuku();
+                    } else if (type === "bangumi") {
+                        if (matchURL.isOldBangumi() || matchURL.isNewBangumi()) {
+                            hideDanmuku();
+                        }
+                    }
+                } else {
+                    hideDanmuku();
+                }
+            }
+        },
+        hideDanmukuFilterType: function(set, type) {
+            if (typeof set !== 'undefined') {
+                var hideDanmukuFilterType = function(ftype) {
+                    var controlBtn = querySelectorFromIframe('.bilibili-player-video-danmaku-setting-left-block-content .bilibili-player-block-filter-type[ftype=' + ftype + ']');
+                    if (controlBtn !== null) {
+                        doClick(controlBtn);
+                        if (controlBtn.getAttribute("data-name") === "ctlbar_danmuku_" + ftype + "_on") {
+                            doClick(controlBtn);
+                        }
+                    }
+                };
+
+                if (typeof type !== 'undefined') {
+                    return new Promise(function(resolve, reject) {
+                        if (type === 'topAndbottom') {
+                            hideDanmukuFilterType('top');
+                            hideDanmukuFilterType('bottom');
+                        } else {
+                            hideDanmukuFilterType(type);
+                        }
+                        resolve('hideDanmukuFilterType done');
+                    });
+                }
+            }
+        },
+        danmukuPreventShade: function(set, type) {
+            if (typeof set !== 'undefined' && typeof type !== 'undefined') {
+                try {
+                    var isDanmukuPreventShadeCheckboxSelected = function(ftype) {
+                        var elem = querySelectorFromIframe('.bilibili-player-video-danmaku-setting-left-preventshade-box .bui-checkbox-label .bui-checkbox-icon-selected');
+                        var theCSSprop = window.getComputedStyle(elem, null).getPropertyValue("display");
+                        if (theCSSprop === 'block') {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    };
+                    var danmukuPreventShade = function() {
+                        var controlBtn = querySelectorFromIframe('.bilibili-player-video-danmaku-setting-left-preventshade input[type="checkbox"]');
+                        if (controlBtn !== null) {
+                            return new Promise(function(resolve, reject) {
+                                doClick(controlBtn);
+                                resolve('danmukuPreventShade done');
+                            });
+                        }
+                    };
+                    if (type === 'on') {
+                        if (!isDanmukuPreventShadeCheckboxSelected()) {
+                            danmukuPreventShade();
+                        }
+                    } else if (type === 'off') {
+                        if (isDanmukuPreventShadeCheckboxSelected()) {
+                            danmukuPreventShade();
+                        }
+                    }
+
+                } catch (e) {
+                    console.log('danmukuPreventShade：' + e);
+                }
+            }
+        },
+        tabDanmulist: function(set) {
+            if (typeof set !== 'undefined') {
+                try {
+                    var timerCount = 0;
+                    var timer = window.setInterval(function callback() {
+                        if (timerCount >= 20) {
+                            clearInterval(timer);
+                        }
+                        timerCount++;
+                        var controlBtn = querySelectorFromIframe('#danmukuBox .bui-collapse-header');
+                        if (controlBtn !== null) {
+                            var isFolded = querySelectorFromIframe('#danmukuBox .bui-collapse-wrap-folded');
+                            if (isFolded !== null) {
+                                doClick(controlBtn);
+                                clearInterval(timer);
+                            }
+                        }
+                    }, 200);
+                } catch (e) {
+                    console.log('tabDanmulist：' + e);
+                }
+            }
+        },
+        autoNextPlist: function(set) {
+            if (typeof set !== 'undefined') {
+                var video = querySelectorFromIframe('.bilibili-player-video > video:nth-child(1)')
+                video.addEventListener("ended", function(e) {
+                    var paused = querySelectorFromIframe('.video-state-pause');
+                    var nextBtn = querySelectorFromIframe('.bilibili-player-video-btn-next');
+
+                    if (paused !== null && nextBtn !== null) {
+                        doClick(nextBtn);
+                    }
+                })
+            }
+        },
+        autoLoopVideo: function(set) {
+            if (typeof set !== 'undefined') {
+                var controlBtn = querySelectorFromIframe('.bilibili-player-video-btn-repeat');
+                if (controlBtn !== null) {
+                    var dataText = controlBtn.querySelector('span.bilibili-player-iconfont-repeat').getAttribute("data-text");
+                    if (dataText !== '关闭洗脑循环') {
+                        doClick(controlBtn);
+                    }
+                }
+            }
+        },
+        autoWebFullScreen: function(set) {
+            if (typeof set !== 'undefined') {
+                var controlBtn = querySelectorFromIframe('.bilibili-player-video-web-fullscreen > i');
+                if (controlBtn !== null) {
+                    var screenMode = sessionStorage.getItem("adjustPlayer_screenMode");
+                    if (screenMode !== "webfullscreen") {
+                        doClick(controlBtn);
+                    }
+                }
+            }
+        },
+        doubleClickFullScreen: function(set, delayed) {
+            if (typeof set !== 'undefined' && typeof delayed !== 'undefined') {
+                try {
+                    var fullScreenBtn = querySelectorFromIframe('.bilibili-player-video-btn-fullscreen');
+                    if (delayed === 0) {
+                        var video = querySelectorFromIframe('.bilibili-player-video video');
+                        video.addEventListener('dblclick', function() {
+                            if (fullScreenBtn !== null) {
+                                doClick(fullScreenBtn);
+                            }
+                        });
+                    } else {
+                        var videoParentNodeEvent = function() {
+                            var dblclickTimer = null;
+                            var videoParentNode = querySelectorFromIframe('.bilibili-player-video');
+                            videoParentNode.addEventListener('click', function() {
+                                clearTimeout(this.dblclickTimer);
+                                this.dblclickTimer = setTimeout(function() {
+                                    var playPauseBtn = querySelectorFromIframe('.bilibili-player-video-btn-start');
+                                    if (playPauseBtn !== null) {
+                                        doClick(playPauseBtn);
+                                    }
+                                }, delayed);
+                            });
+                            videoParentNode.addEventListener('dblclick', function() {
+                                clearTimeout(this.dblclickTimer);
+                                if (fullScreenBtn !== null) {
+                                    doClick(fullScreenBtn);
+                                }
+                            });
+                        };
+
+                        var iframePlayer = document.querySelector('iframe.bilibiliHtml5Player');
+                        if (iframePlayer === null) {
+                            window.eval([
+                                '$(".bilibili-player-video").unbind("click");',
+                                'window.bilibiliPlayerVideoEvents = $(".bilibili-player-video").data("events")'
+                            ].join(''));
+                        } else {
+                            iframePlayer.contentWindow.window.eval([
+                                '$(".bilibili-player-video").unbind("click");',
+                                'top.window.bilibiliPlayerVideoEvents = $(".bilibili-player-video").data("events")'
+                            ].join(''));
+                        }
+
+                        //console.log(unsafeWindow.bilibiliPlayerVideoEvents);
+                        if (typeof unsafeWindow.bilibiliPlayerVideoEvents === 'undefined') {
+                            videoParentNodeEvent();
+                        } else {
+                            if (typeof unsafeWindow.bilibiliPlayerVideoEvents.click === 'undefined') {
+                                videoParentNodeEvent();
+                            } else {
+                                console.log('doubleClickFullScreen： unbind click event failed');
+                                return;
+                            }
+                            console.log('doubleClickFullScreen： unbind click event failed');
+                        }
+                    }
+                } catch (e) {
+                    console.log('doubleClickFullScreen：' + e);
+                }
+            }
+        },
+        autoVideoSpeed: function(set, speed, video) {
+            if (typeof set !== 'undefined' && video !== null) {
+                try {
+                    var adjustPlayerVideoPlaybackRate = sessionStorage.getItem("adjustPlayer_videoPlaybackRate");
+                    if (adjustPlayerVideoPlaybackRate !== null) {
+                        video.playbackRate = parseFloat(adjustPlayerVideoPlaybackRate);
+                        return;
+                    }
+                    var timerCount = 0;
+                    var timer = window.setInterval(function() {
+                        if ((timerCount >= 20) || video.playbackRate == speed) {
+                            clearInterval(timer);
+                        }
+                        timerCount++;
+                        //clearInterval(timer);
+                        video.playbackRate = parseFloat(speed);
+                        console.log(speed);
+                    }, 200);
+                    //video.playbackRate = parseFloat(speed);
+                } catch (e) {
+                    console.log('autoVideoSpeed：' + e);
+                }
+            }
+        },
+        autoLightOn: function(set, type, callback) {
+            if (typeof set !== 'undefined') {
+                try {
+                    var isActiveContextMenu = querySelectorFromIframe('.bilibili-player-context-menu-container.black');
+                    if (isActiveContextMenu !== null && isActiveContextMenu.getAttribute("class").search("active") !== -1) {
+                        return;
+                    }
+
+                    var clickLightOnOff = function(controlBtn) {
+                        if (controlBtn !== null) {
+                            var tipsText = null;
+                            var lightOnOffItem = null;
+                            var contextMenuItem = controlBtn.querySelectorAll('li > a'),
+                                i;
+                            for (i = 0; i < contextMenuItem.length; ++i) {
+                                if (contextMenuItem[i].innerHTML === "关灯" || contextMenuItem[i].innerHTML === "开灯") {
+                                    var tipsText = contextMenuItem[i].innerHTML;
+                                    lightOnOffItem = contextMenuItem[i];
+                                    doClick(contextMenuItem[i]);
+                                    return tipsText;
+                                    break;
+                                }
+                            }
+                        }
+                        if (type === "ONOFF" && typeof callback === "function") {
+                            callback();
+                        }
+                    };
+
+                    var heimuDblclickEvent = function() {
+                        var heimu = document.querySelector('#heimu');
+                        var isDblclickEvent = heimu.getAttribute("heimuDblclick");
+                        if (isDblclickEvent === null) {
+                            heimu.addEventListener('dblclick', function() {
+                                heimu.setAttribute("style", "display: none;");
+                            });
+                            heimu.setAttribute("heimuDblclick", "true");
+                        }
+                    };
+
+                    var timerCount = 0;
+                    var timer = window.setInterval(function callback() {
+                        if (timerCount >= 20) {
+                            clearInterval(timer);
+                        }
+                        timerCount++;
+
+                        contextMenuClick(querySelectorFromIframe('.bilibili-player-area > .bilibili-player-video-wrap'));
+                        var status = clickLightOnOff(querySelectorFromIframe('.bilibili-player-context-menu-container'));
+                        heimuDblclickEvent();
+                        if (type === "ON" || typeof type === 'undefined') {
+                            if (status === "关灯") {
+                                heimuDblclickEvent();
+                                clearInterval(timer);
+                            }
+                        } else if (type === "ONOFF") {
+                            if (status === "关灯" || status === "开灯") {
+                                heimuDblclickEvent();
+                                clearInterval(timer);
+                            }
+                        }
+
+                    }, 200);
+                } catch (e) {
+                    console.log('autoLightOn：' + e);
+                }
+            }
+        },
+        resizePlayer: function(set, width, ratio, videoInfoAndUpInfoPosition, isAutohideControlbar) {
+            if (typeof set !== 'undefined' && typeof width !== 'undefined') {
+                try {
+                    var resizePlayer = function() {
+                        var screenMode = sessionStorage.getItem("adjustPlayer_screenMode");
+                        var playerCustomWidth = width + 'px';
+                        var playerNormalModeWidth = 'calc(' + playerCustomWidth + ' - 350px - 30px )';
+                        var playerMarginTop = 'calc(0px + 50px + 20px)';
+                        var playerBottomBarHeight = isAutohideControlbar && screenMode === 'widescreen' ? playerBottomBarHeight = '0px' : playerBottomBarHeight = '46px';
+                        var playerNormalModeHeight = 'calc( ' + playerNormalModeWidth + ' / calc(' + ratio + ') + ' + playerBottomBarHeight + ')';
+                        var videoInfoAndUpInfo = '';
+
+                        //videoInfoAndUpInfoPosition
+                        if (videoInfoAndUpInfoPosition === 'top') {
+                            playerMarginTop = 'calc(0px + 50px + 20px + 120px)';
+                            videoInfoAndUpInfo = '#viewbox_report,#v_upinfo { position: absolute !important; top: 70px !important;  }' +
+                                '#viewbox_report { max-width:calc(' + width + 'px - 384px - 20px ); }' +
+                                '#v_upinfo{ margin-left: calc(' + width + 'px - 384px); max-width:384px; } .up-info .u-info .desc { max-width:calc(350px - 30px); } .up-info .btn { margin-top: 50px; position: absolute; left: 64px; }';
+                        } else if (videoInfoAndUpInfoPosition === 'bottom') {
+                            videoInfoAndUpInfo = '';
+                        } else {
+                            videoInfoAndUpInfo = '';
+                        }
+
+                        var css = [''];
+                        if (screenMode === "normal") {
+                            css = [
+                                '@media (min-width: ' + playerCustomWidth + ' ) {',
+                                '#bofqi:not(.mini-player) {',
+                                '    width: ' + playerCustomWidth + ' !important; ',
+                                '    height: ' + playerNormalModeHeight + ' !important; ',
+                                '    margin-left: 0 !important;',
+                                '    left: calc(50% - ' + playerCustomWidth + ' / 2) !important; ',
+                                '    top: ' + playerMarginTop + ' !important;',
+                                '    background: none !important;',
+                                '    pointer-events: none;',
+                                '    position: absolute !important;',
+                                '}',
+                                '#bofqi:not(.mini-player) .player{',
+                                '    width: ' + playerNormalModeWidth + ' !important; ',
+                                '    height: ' + playerNormalModeHeight + ' !important; ',
+                                '    pointer-events: none;',
+                                '}',
+                                '#playerWrap { height: 0px !important; },',
+                                '.v-wrap  { width: ' + playerCustomWidth + ' !important; margin: 0 auto !important; }',
+                                '.v-wrap .l-con { width: calc(100% - 350px - 30px) !important; }',
+                                '.v-wrap .r-con { width: 350px !important; }',
+                                '.v-wrap .l-con , .v-wrap .r-con { margin-top:calc(' + playerNormalModeHeight + ' + ' + playerMarginTop + ' ) !important; }',
+                                '#danmukuBox { position: absolute !important; top: ' + playerMarginTop + ' !important; height: ' + playerNormalModeHeight + ' !important; }',
+                                '' + videoInfoAndUpInfo + '',
+                                '}'
+                            ];
+                        } else if (screenMode === "widescreen") {
+                            css = [
+                                '@media (min-width: ' + playerCustomWidth + ' ) {',
+                                '#bofqi:not(.mini-player) {',
+                                '    width: ' + playerCustomWidth + ' !important; ',
+                                '    height: calc( ' + playerCustomWidth + ' / calc(' + ratio + ') + ' + playerBottomBarHeight + ') !important; ',
+                                '    margin-left: 0 !important;',
+                                '    left: calc(50% - ' + playerCustomWidth + ' / 2) !important; ',
+                                '    top: ' + playerMarginTop + ' !important;',
+                                '    position: absolute !important;',
+                                '}',
+                                '#playerWrap { height:0px !important; },',
+                                '.v-wrap  { width: ' + playerCustomWidth + ' !important; margin: 0 auto !important; }',
+                                '.v-wrap .l-con { width: calc(100% - 350px - 30px) !important; }',
+                                '.v-wrap .r-con { width: 350px !important; }',
+                                '.v-wrap .l-con , .v-wrap .r-con { margin-top:calc(' + playerCustomWidth + ' / calc(' + ratio + ') + ' + playerBottomBarHeight + ' + ' + playerMarginTop + ' ) !important; }',
+                                '#danmukuBox { position: absolute !important; top: ' + playerMarginTop + ' !important; height: ' + playerNormalModeHeight + ' !important; visibility: hidden;}',
+                                '' + videoInfoAndUpInfo + '',
+                                '}'
+                            ];
+                        }
+                        var node = document.createElement('style');
+                        node.type = 'text/css';
+                        node.id = 'adjustPlayerSize';
+                        var adjustMiniPlayerSizeCSS = document.querySelector('#adjustPlayerSize');
+                        if (adjustMiniPlayerSizeCSS !== null) {
+                            adjustMiniPlayerSizeCSS.remove();
+                        }
+                        node.appendChild(document.createTextNode(css.join('')));
+                        document.documentElement.appendChild(node);
+
+                        //修复高度不正确
+                        var evt = document.createEvent('Event');
+                        evt.initEvent('resize', true, true);
+                        querySelectorFromIframe('.bilibili-player-video video').dispatchEvent(evt);
+
+                        //普通模式下超过最小高度不调整
+                        if (screenMode === "normal") {
+                            var player = document.querySelector('#bofqi:not(.mini-player)');
+                            if (player !== null) {
+                                if (player.offsetHeight <= 408) {
+                                    var adjustMiniPlayerSizeCSS = document.querySelector('#adjustPlayerSize');
+                                    if (adjustMiniPlayerSizeCSS !== null) {
+                                        adjustMiniPlayerSizeCSS.remove();
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    var fixSwitchScreenMode = function() {
+                        var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+                        var observer = new MutationObserver(function(records) {
+                            records.map(function(record) {
+                                var resizeTimer;
+                                resizeTimer = setTimeout(function() {
+                                    clearTimeout(this.resizeTimer);
+                                    resizePlayer();
+                                }, 200);
+                            });
+                        });
+                        observer.observe(document.querySelector('#bofqi'), {
+                            attributes: true,
+                            childList: true
+                        });
+                    }
+                    var player = isPlayer();
+                    if (player === "html5Player") {
+                        setTimeout(function() {
+                            if (document.querySelector('#adjustPlayerSize') !== null) {
+                                fixSwitchScreenMode();
+                                return;
+                            } else {
+                                resizePlayer();
+                                fixSwitchScreenMode();
+                            }
+                        }, 200);
+                    }
+                } catch (e) {
+                    console.log('resizePlayer：' + e);
+                }
+            }
+        },
+        resizeMiniPlayer: function(set, width, isResizable) {
+            if (typeof set !== 'undefined' && typeof width !== 'undefined') {
+                var resize = function() {
+                    var css = [
+                        '#bofqi.mini-player, #bofqi.mini-player:before , #bofqi.mini-player .player { width: ' + width + 'px !important; height: calc(' + width + 'px / calc(16 / 9)) !important; }',
+                        '#adjust-player-miniplayer-resizable { width: ' + width + 'px ; height: calc(' + width + 'px / calc(16 / 9)) !important; position: absolute; top: 0px; z-index: 0; overflow: hidden; resize: both; min-height:100px; min-width:100px; }',
+                        '#adjust-player-miniplayer-resizable.show,#adjust-player-miniplayer-resizable.show .drag { display:block !important; }',
+                        '.newfloat #adjust-player-miniplayer-resizable, .mini-player #adjust-player-miniplayer-resizable { z-index: 10000; }'
+                    ];
+                    var node = document.createElement('style');
+                    node.type = 'text/css';
+                    node.id = 'adjustMiniPlayerSize';
+                    node.appendChild(document.createTextNode(css.join('')));
+                    var adjustMiniPlayerSizeCSS = document.querySelector("#adjustMiniPlayerSize");
+                    if (adjustMiniPlayerSizeCSS !== null) {
+                        adjustMiniPlayerSizeCSS.remove();
+                    }
+                    document.documentElement.appendChild(node);
+                };
+
+                var resizable = function(initResize) {
+                    //console.log("resizable");
+                    var resizableElement = document.createElement('div');
+                    resizableElement.id = "adjust-player-miniplayer-resizable";
+                    resizableElement.innerHTML = '<div class="drag" style="width: 10px; height: 10px; position: absolute; bottom: 0px; right: 0; background: #fff; pointer-events: none;display:none;">↘</div>';
+
+                    var miniPlayerDiv = document.querySelector('.mini-player');
+                    if (miniPlayerDiv !== null) {
+                        var adjustMiniPlayerSizeResizable = document.querySelector("#adjust-player-miniplayer-resizable");
+                        if (adjustMiniPlayerSizeResizable === null) {
+                            miniPlayerDiv.appendChild(resizableElement);
+                        }
+
+                        var requestAnimationFrame = window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+                        var cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame;
+                        var requestId;
+                        var loopTimer;
+
+                        var dragEvent = function(width, height) {
+                            var css = [
+                                '#bofqi.mini-player, #bofqi.mini-player:before , #bofqi.mini-player .player { width: ' + width + 'px !important; height: ' + height + 'px !important; }',
+                                '#adjust-player-miniplayer-resizable { position: absolute; top: 0; z-index: 1; overflow: hidden; resize: both; min-height:100px; min-width:100px;width: ' + width + 'px; height: ' + height + 'px; }',
+                                '#adjust-player-miniplayer-resizable.show,#adjust-player-miniplayer-resizable.show .drag { display:block !important; }',
+                                '.newfloat #adjust-player-miniplayer-resizable, .mini-player #adjust-player-miniplayer-resizable { z-index: 10000; }',
+                            ];
+                            //console.log(resizableElementWidth + "\n" + resizableElementHeight);
+                            var node = document.createElement('style');
+                            node.type = 'text/css';
+                            node.id = 'adjustMiniPlayerSize';
+                            node.appendChild(document.createTextNode(css.join('')));
+                            var adjustMiniPlayerSizeCSS = document.querySelector("#adjustMiniPlayerSize");
+                            if (adjustMiniPlayerSizeCSS !== null) {
+                                adjustMiniPlayerSizeCSS.remove();
+                            }
+                            document.documentElement.appendChild(node);
+                            var player = document.querySelector("#bilibiliPlayer");
+                            player.classList.add("mode-miniscreen");
+                        };
+
+                        if (initResize) {
+                            dragEvent(width, Number(width / (16 / 9)).toFixed());
+                        }
+
+                        function loop() {
+                            requestId = undefined;
+                            dragEvent(resizableElement.clientWidth, resizableElement.clientHeight);
+                            start();
+                        }
+
+                        function start() {
+                            if (!requestId) {
+                                requestId = requestAnimationFrame(loop);
+                            }
+                        }
+
+                        function stop() {
+                            if (requestId) {
+                                cancelAnimationFrame(requestId);
+                                requestId = undefined;
+                            }
+                        }
+                        resizableElement.addEventListener("mouseup", function(e) {
+                            stop();
+                        }, false);
+                        resizableElement.addEventListener("mousedown", function(e) {
+                            if (e.buttons === 1) {
+                                if ((resizableElement.clientWidth - 10) < e.offsetX && (resizableElement.clientHeight - 10) < e.offsetY) {
+                                    start();
+                                    loopTimer = window.setTimeout(function() {
+                                        clearTimeout(this.loopTimer);
+                                        var resizableElementStyle = resizableElement.getAttribute('class');
+                                        if (resizableElementStyle === 'show') {
+                                            var fixUndersize = function() {
+                                                clearTimeout(loopTimer);
+                                                resizableElement.setAttribute('style', 'width:320px;height:180px;');
+                                                start();
+                                                loopTimer = window.setTimeout(function() {
+                                                    stop();
+                                                }, 5000);
+                                            };
+                                            if (resizableElement.style === '') {
+                                                fixUndersize();
+                                            } else {
+                                                var miniPlayerWidth = miniPlayerDiv.clientWidth;
+                                                var miniPlayerHeight = miniPlayerDiv.clientHeight;
+                                                if (matchURL.isWatchlater()) {
+                                                    miniPlayerHeight = miniPlayerHeight - 30;
+                                                }
+                                                if (miniPlayerWidth <= 100 || miniPlayerHeight <= 100) {
+                                                    fixUndersize();
+                                                } else {
+                                                    resizableElement.setAttribute('style', 'width:' + miniPlayerWidth + 'px;height:' + miniPlayerHeight + 'px;');
+                                                    stop();
+                                                }
+                                            }
+                                        } else {
+                                            stop();
+                                            miniPlayerHideShow('hide');
+                                        }
+                                    }, 3000);
+                                } else {
+                                    doClick(document.querySelector('.bilibili-player-video'));
+                                }
+                            }
+                        }, false);
+                    }
+                };
+
+                var miniPlayerHideShow = function(type) {
+                    var scrollResizeTimer;
+                    var adjustMiniPlayerSizeResizable = document.querySelector("#adjust-player-miniplayer-resizable");
+                    if (type === "hide") {
+                        var player = document.querySelector("#bilibiliPlayer");
+                        player.classList.remove("mode-miniscreen");
+                        var adjustMiniPlayerSizeCSS = document.querySelector("#adjustMiniPlayerSize");
+                        if (adjustMiniPlayerSizeCSS !== null) {
+                            adjustMiniPlayerSizeCSS.remove();
+                        }
+                        if (adjustMiniPlayerSizeResizable !== null) {
+                            adjustMiniPlayerSizeResizable.classList.remove("show");
+                            adjustMiniPlayerSizeResizable.setAttribute('style', '');
+                        }
+                    } else if (type === "show") {
+                        if (adjustMiniPlayerSizeResizable !== null) {
+                            var miniPlayer = document.querySelector('.mini-player');
+                            if (miniPlayer !== null) {
+                                adjustMiniPlayerSizeResizable.classList.add("show");
+                            }
+                        }
+                    }
+                    scrollResizeTimer = window.setTimeout(function() {
+                        clearTimeout(this.scrollResizeTimer);
+                        var evt = document.createEvent('Event');
+                        evt.initEvent('resize', true, true);
+                        querySelectorFromIframe('.bilibili-player-video video').dispatchEvent(evt);
+                    }, 800);
+                };
+
+                var miniPlayerHideShowEvent = function() {
+                    var initResize = function(isMiniPlayer) {
+                        var player = isPlayer();
+                        if (player === "html5Player") {
+                            if (isMiniPlayer) {
+                                if (typeof window.isInitResize === 'undefined' || window.isInitResize === false) {
+                                    if (typeof isResizable !== 'undefined' && isResizable === 'on') {
+                                        resizable(isMiniPlayer);
+                                    } else {
+                                        resize();
+                                    }
+                                    miniPlayerHideShow('show');
+                                    window.isInitResize = true;
+                                }
+                            } else {
+                                if (typeof window.isInitResize === 'undefined' || window.isInitResize === true) {
+                                    miniPlayerHideShow('hide');
+                                    window.isInitResize = false;
+                                }
+                            }
+                        } else {
+                            resize();
+                        }
+                    };
+
+                    var observerPlayerElement = document.querySelector('#bofqi');
+                    if (matchURL.isNewBangumi()) {
+                        observerPlayerElement = document.querySelector('#bangumi_player .bangumi-player');
+                    } else if (matchURL.isWatchlater() === true) {
+                        observerPlayerElement = document.querySelector('#bilibiliPlayer .bilibili-player-video-wrap');
+                    }
+
+                    var isMiniPlayer;
+                    if (observerPlayerElement.getAttribute("class") !== null && observerPlayerElement.getAttribute("class").search("mini-player") !== -1) {
+                        isMiniPlayer = true;
+                    } else {
+                        isMiniPlayer = false;
+                    }
+                    initResize(isMiniPlayer);
+
+                    var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+                    var observer = new MutationObserver(function(records) {
+                        records.map(function(record) {
+                            if (record.target.getAttribute("class").search("mini-player") !== -1) {
+                                isMiniPlayer = true;
+                            } else {
+                                isMiniPlayer = false;
+                            }
+                            initResize(isMiniPlayer);
+                        });
+                    });
+                    observer.observe(observerPlayerElement, {
+                        attributes: true,
+                        attributeFilter: ['class']
+                    });
+                };
+                miniPlayerHideShowEvent();
+            }
+        },
+        autoHideSendbar: function(set, focusDanmakuInput, video) {
+            if (typeof set !== 'undefined') {
+                try {
+                    if (querySelectorFromIframe('#adjustPlayerAutoHideSendbar')) {
+                        return;
+                    }
+
+                    //开启了“自动隐藏播放器控制栏”并设置了“定位到弹幕框的快捷键”之后，鼠标移动到弹幕框时不显示“弹幕框”
+                    var isFocusDanmakuInput = function() {
+                        var css = '';
+                        if (focusDanmakuInput) {
+                            css = '#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-sendbar, #bilibiliPlayer.mode-widescreen .bilibili-player-video-sendbar { visibility: hidden; }';
+                        }
+                        return css;
+                    };
+
+                    var css = [
+                        //修改自 https://userstyles.org/styles/131642/bilibili-html5
+                        '#bilibiliPlayer.mode-widescreen .bilibili-player-video-bottom-area { position: absolute !important; width: 100% !important;  }',
+                        '#bilibiliPlayer.mode-widescreen .bilibili-player-video-info { color:hsla(0,0%,100%,.8); display: none !important; }',
+                        '#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-danmaku-setting-wrap, #bilibiliPlayer.mode-widescreen .bilibili-player-video-danmaku-setting-wrap { top: 46px !important; bottom: 0 !important; right: -240px !important; }',
+                        '#bilibiliPlayer.mode-webfullscreen .bilibili-player-mode-selection-container, #bilibiliPlayer.mode-widescreen .bilibili-player-mode-selection-container { position: relative; bottom: 0; }',
+                        '#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-sendbar, #bilibiliPlayer.mode-widescreen .bilibili-player-video-sendbar { background: rgba(33,33,33,.8) !important; opacity: 0; transition: all .2s ease-in-out; }',
+                        '#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-control-bottom-center { position: fixed; width: 100% !important; top: 0 !important; padding: 0 !important; left: 0 !important; }',
+                        '#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-sendbar { width: 100% !important; max-width: unset !important; }',
+                        '#bilibiliPlayer.mode-webfullscreen .bilibili-player-video-sendbar:hover, #bilibiliPlayer.mode-widescreen .bilibili-player-video-sendbar:hover { opacity: 1; }',
+                        isFocusDanmakuInput()
+                    ];
+                    var node = document.createElement('style');
+                    node.type = 'text/css';
+                    node.id = 'adjustPlayerAutoHideSendbar';
+                    node.appendChild(document.createTextNode(css.join('')));
+                    querySelectorFromIframe('.player').appendChild(node);
+
+                } catch (e) {
+                    console.log('adjustPlayerAutoHideSendbar：' + e);
+                }
+            }
+        },
+        videoSeekingShowSendbar: function(set, video) {
+            if (typeof set !== 'undefined' && video !== null) {
+                video.addEventListener("seeking", function() {
+                    var controlBar = querySelectorFromIframe('#bilibiliPlayer .bilibili-player-video-control-wrap');
+                    var controlMask = querySelectorFromIframe('#bilibiliPlayer .bilibili-player-video-control-mask');
+                    var visibleStyle = "opacity: 1; visibility: visible; ";
+                    if (controlBar !== null) {
+                        controlBar.style = visibleStyle;
+                        controlMask.style = visibleStyle;
+                        var timer = null;
+                        clearTimeout(this.timer);
+                        this.timer = setTimeout(function() {
+                            if (controlBar !== null) {
+                                controlBar.style = "";
+                                controlMask.style = "";
+                            }
+                        }, 3000);
+                    }
+                }, true);
+            }
+        },
+        skipSetTime: function(set, skipTime, video) {
+            if (typeof set !== 'undefined' && video !== null) {
+                var setTime = function() {
+                    var vLength = video.duration.toFixed();
+                    //console.log(skipTime);
+                    try {
+                        if (skipTime === 0) {
+                            video.currentTime = set;
+                        } else if (skipTime > vLength) {
+                            return;
+                        } else {
+                            video.currentTime += skipTime;
+                        }
+                    } catch (e) {
+                        console.log('skipSetTime：' + e);
+                    }
+                };
+                setTime();
+            }
+        },
+        shortcuts: function(set) {
+            var shortcut = {
+                playPause: function() {
+                    var video = querySelectorFromIframe('.bilibili-player-video video');
+                    var button = querySelectorFromIframe('.bilibili-player-video-btn-start');
+                    if (video !== null) {
+                        if (!video.paused) {
+                            doClick(button);
+                            shortcut.shortcutsTips("播放/暂停", "暂停");
+                        } else {
+                            doClick(button);
+                            shortcut.shortcutsTips("播放/暂停", "播放");
+                        }
+                    }
+                },
+                videoFramerate: function(type) {
+                    var video = querySelectorFromIframe('.bilibili-player-video video');
+                    var framerate = 24;
+                    if (video !== null) {
+                        var contextMenu = querySelectorFromIframe('.bilibili-player-area > .bilibili-player-video-wrap');
+                        contextMenuClick(contextMenu);
+
+                        var controlBtn = querySelectorFromIframe('div.bilibili-player-context-menu-container:nth-child(4)');
+                        if (controlBtn !== null) {
+                            var contextMenuItem = controlBtn.querySelectorAll('li > a'),
+                                i;
+                            for (i = 0; i < contextMenuItem.length; ++i) {
+                                if (contextMenuItem[i].innerHTML === "视频统计信息") {
+                                    doClick(contextMenuItem[i]);
+                                    doClick(querySelectorFromIframe('a.bilibili-player-video-info-close'));
+                                    var fps = querySelectorFromIframe('.bilibili-player-video-info-panel > div[data-name="fps"] .info-data');
+                                    fps = parseFloat(fps.innerHTML);
+                                    if (!isNaN(fps)) {
+                                        framerate = fps;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        //var currentFrame = Math.floor(video.currentTime * framerate);
+                        if (!video.paused) {
+                            var button = querySelectorFromIframe('.bilibili-player-video-btn-start');
+                            doClick(button);
+                        }
+                        if (type === "prev") {
+                            video.currentTime -= 1 / framerate;
+                            shortcut.shortcutsTips("视频帧率", "快退一帧");
+                        } else if (type === "next") {
+                            video.currentTime += 1 / framerate;
+                            shortcut.shortcutsTips("视频帧率", "快进一帧");
+                        }
+                    }
+                },
+                showHideDanmuku: function() {
+                    var controlBtn = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch > input');
+                    createMouseoverAndMouseoutEvent('show', controlBtn);
+                    createMouseoverAndMouseoutEvent('hide', controlBtn);
+                    setTimeout(function() {
+                        if (controlBtn !== null) {
+                            doClick(controlBtn);
+                            var tipsValue = function() {
+                                var chooseDanmaku = querySelectorFromIframe('.bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch .choose_danmaku');
+                                if (chooseDanmaku.innerHTML === "关闭弹幕") {
+                                    return "打开弹幕";
+                                } else {
+                                    return "关闭弹幕";
+                                }
+                            };
+                            shortcut.shortcutsTips("弹幕", tipsValue());
+                        }
+                    }, 200);
+                },
+                videoSpeed: function(type) {
+                    var video = querySelectorFromIframe('.bilibili-player-video video');
+                    if (video !== null) {
+                        var videoSpeed = video.playbackRate;
+                        var speed = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 6, 8, 12, 16];
+                        switch (type) {
+                            case 'add':
+                                var addSpeed = Math.max(...speed);
+                                if (videoSpeed < addSpeed) {
+                                    for (var i = 0; i < speed.length; i++) {
+                                        if (addSpeed > speed[i] && videoSpeed < speed[i]) {
+                                            addSpeed = speed[i];
+                                        }
+                                    }
+                                    video.playbackRate = addSpeed;
+                                }
+                                shortcut.shortcutsTips("播放速度", video.playbackRate + "倍速");
+                                break;
+                            case 'sub':
+                                var subSpeed = Math.min(...speed);
+                                if (videoSpeed > subSpeed) {
+                                    for (var i = 0; i < speed.length; i++) {
+                                        if (subSpeed < speed[i] && videoSpeed > speed[i]) {
+                                            subSpeed = speed[i];
+                                        }
+                                    }
+                                    video.playbackRate = subSpeed;
+                                }
+                                shortcut.shortcutsTips("播放速度", video.playbackRate + "倍速");
+                                break;
+                            case 'reset':
+                                if (videoSpeed != 1) {
+                                    video.playbackRate = 1;
+                                }
+                                shortcut.shortcutsTips("播放速度", video.playbackRate + "倍速");
+                                break;
+                            default:
+                                console.log("請不要把奇怪的東西插進來");
+                                break;
+                        }
+                        sessionStorage.setItem("adjustPlayer_videoPlaybackRate", video.playbackRate);
+                    }
+                },
+                playerWide: function() {
+                    var widescreenBtn = querySelectorFromIframe('.bilibili-player-video-btn-widescreen');
+                    if (widescreenBtn !== null) {
+                        doClick(widescreenBtn);
+                    }
+
+                    var tipsValue = function() {
+                        var screenMode = sessionStorage.getItem("adjustPlayer_screenMode");
+                        if (screenMode === "fullscreen") {
+                            return "全屏状态下无法使用";
+                        } else if (screenMode === "widescreen") {
+                            return "退出宽屏";
+                        } else {
+                            return "进入宽屏";
+                        }
+                    };
+
+                    shortcut.shortcutsTips("宽屏模式", tipsValue());
+                },
+                fullscreen: function() {
+                    var controlBtn = querySelectorFromIframe('.bilibili-player-video-btn-fullscreen');
+                    if (controlBtn !== null) {
+                        doClick(controlBtn);
+
+                        var tipsValue = function() {
+                            if (isFullscreen()) {
+                                return "退出全屏";
+                            } else {
+                                return "进入全屏";
+                            }
+                        };
+
+                        shortcut.shortcutsTips("全屏", tipsValue());
+                    }
+                },
+                webfullscreen: function() {
+                    var controlBtn = querySelectorFromIframe('.bilibili-player-video-web-fullscreen > i');
+                    if (controlBtn !== null) {
+                        doClick(controlBtn);
+
+                        var tipsValue = function() {
+                            var screenMode = sessionStorage.getItem("adjustPlayer_screenMode");
+                            if (screenMode === "webfullscreen") {
+                                return "退出网页全屏";
+                            } else {
+                                return "进入网页全屏";
+                            }
+                        };
+
+                        shortcut.shortcutsTips("网页全屏", tipsValue());
+                    }
+                },
+                gotoPlist: function(type) {
+                    var video = querySelectorFromIframe('.bilibili-player-video video');
+                    if (video !== null) {
+                        var plist, nextPlist, prevPlist, curPage;
+                        if (matchURL.isVideoAV()) {
+                            plist = document.querySelector('#multi_page');
+                            curPage = document.querySelector('#multi_page .cur-list .on');
+                            if (curPage !== null) {
+                                nextPlist = curPage.nextElementSibling;
+                                prevPlist = curPage.previousElementSibling;
+                            }
+                        }
+                        if (type === "prev") {
+                            if (typeof plist !== 'undefined' && plist !== null) {
+                                if (matchURL.isVideoAV()) {
+                                    if (prevPlist !== null) {
+                                        prevPlist = prevPlist.querySelector('a[href]');
+                                    } else {
+                                        var prevPaging = document.querySelector('#multi_page .paging .on')
+                                        if (prevPaging !== null) {
+                                            prevPaging = prevPaging.previousElementSibling;
+                                            if (prevPaging !== null) {
+                                                doClick(prevPaging);
+                                                setTimeout(function() {
+                                                    var curList = document.querySelector('#multi_page .cur-list li:last-child a[href]');
+                                                    doClick(curList);
+                                                }, 200);
+                                                return;
+                                            }
+                                        }
+                                    }
+                                }
+                                var readyState = querySelectorFromIframe('.bilibili-player-video-panel').getAttribute('style');
+                                if (readyState !== null) {
+                                    if (readyState.search("display: none;") !== -1) {
+                                        doClick(prevPlist);
+                                        if (prevPlist === null) {
+                                            shortcut.shortcutsTips("分集切换", "没有上一集了");
+                                        }
+                                    } else {
+                                        return;
+                                    }
+                                }
+                            } else {
+                                shortcut.shortcutsTips("分集切换", "没有上一集了");
+                            }
+                        } else if (type === "next") {
+                            if (typeof plist !== 'undefined' && plist !== null) {
+                                if (matchURL.isVideoAV()) {
+                                    if (nextPlist !== null) {
+                                        nextPlist = nextPlist.querySelector('a[href]');
+                                    } else {
+                                        var nextPaging = document.querySelector('#multi_page .paging .on');
+                                        if (nextPaging !== null) {
+                                            nextPaging = nextPaging.nextElementSibling;
+                                            if (nextPaging !== null) {
+                                                doClick(nextPaging);
+                                                setTimeout(function() {
+                                                    var curList = document.querySelector('#multi_page .cur-list li:first-child a[href]');
+                                                    doClick(curList);
+                                                }, 200);
+                                                return;
+                                            }
+                                        }
+                                    }
+                                }
+                                var readyState = querySelectorFromIframe('.bilibili-player-video-panel').getAttribute('style');
+                                if (readyState !== null) {
+                                    if (readyState.search("display: none;") !== -1) {
+                                        doClick(nextPlist);
+                                        if (nextPlist === null) {
+                                            shortcut.shortcutsTips("分集切换", "没有下一集了");
+                                        }
+                                    } else {
+                                        return;
+                                    }
+                                }
+                            } else {
+                                shortcut.shortcutsTips("分集切换", "没有下一集了");
+                            }
+                        }
+                    }
+                },
+                videoMute: function() {
+                    var controlBtn = querySelectorFromIframe('.bilibili-player-video-btn-volume');
+                    if (controlBtn !== null) {
+                        doClick(controlBtn.querySelector('.bilibili-player-iconfont-volume'));
+
+                        var tipsValue = function() {
+                            if (controlBtn.className.search("video-state-volume-min") !== -1) {
+                                return "静音";
+                            } else {
+                                return "恢复静音";
+                            }
+                        };
+
+                        shortcut.shortcutsTips("静音", tipsValue());
+                    }
+                },
+                lightOnOff: function() {
+                    var isHeimuExist = function() {
+                        var flag = false;
+                        if (matchURL.isVideoAV() || matchURL.isWatchlater()) {
+                            var heimu = document.querySelector('#heimu');
+                            if (heimu !== null) {
+                                var heimuStyle = heimu.getAttribute("style");
+                                if (heimuStyle.search("display: block;") !== -1) {
+                                    flag = true;
+                                }
+                            }
+                        } else {
+                            var heimu = document.querySelector('#heimu');
+                            if (heimu !== null) {
+                                var heimuStyle = heimu.getAttribute("style");
+                                if (heimuStyle !== null) {
+                                    if (heimuStyle.search("display: block;") !== -1) {
+                                        flag = true;
+                                    }
+                                }
+                            }
+                        }
+                        return flag;
+                    };
+
+                    var tipsValue = function() {
+                        if (isHeimuExist()) {
+                            return "开灯";
+                        } else {
+                            return "关灯";
+                        }
+                    };
+
+                    adjustPlayer.autoLightOn(true, "ONOFF", shortcut.shortcutsTips("开/关灯", tipsValue()));
+                },
+                loopVideoOnOff: function() {
+                    var controlBtn = querySelectorFromIframe('.bilibili-player-video-btn-repeat');
+                    if (controlBtn !== null) {
+                        doClick(controlBtn);
+
+                        setTimeout(function() {
+                            var controllTooltip = querySelectorFromIframe('div.player-tooltips');
+                            if (controllTooltip !== null) {
+                                controllTooltip.style.display = "none";
+                            }
+                        }, 200);
+
+                        var tipsValue = function() {
+                            var dataText = controlBtn.querySelector('.bilibili-player-video-btn-repeat span.bilibili-player-iconfont-repeat').getAttribute("data-text");
+                            if (dataText !== '关闭洗脑循环') {
+                                return "关闭";
+                            } else {
+                                return "开启";
+                            }
+                        };
+                        shortcut.shortcutsTips("循环播放", tipsValue());
+                    }
+                },
+                focusPlayer: function() {
+                    var controlBtn = document.body.getAttribute("adjustPlayerScrollToY");
+                    if (controlBtn === null) {
+                        var scrollToY = (window.pageYOffset || document.documentElement.scrollTop) - (document.documentElement.clientTop || 0);
+                        document.body.setAttribute("adjustPlayerScrollToY", scrollToY);
+
+                        var setting = window.adjustPlayerSetting;
+                        var autoFocusOffsetType = setting.autoFocusPlayerOffsetType;
+                        var autoFocusOffsetValue = setting.autoFocusPlayerOffsetValue;
+                        adjustPlayer.autoFocusPlayer(true, autoFocusOffsetType, autoFocusOffsetValue, true);
+                        shortcut.shortcutsTips("定位", "到播放器顶端");
+
+                    } else {
+                        var scrollToY = document.body.getAttribute("adjustPlayerScrollToY");
+                        unsafeWindow.scrollTo(0, scrollToY);
+
+                        shortcut.shortcutsTips("定位", "回到之前位置");
+                        document.body.removeAttribute("adjustPlayerScrollToY");
+                    }
+                },
+                moveToPlayerFocus: function() {
+                    var videoFocus = querySelectorFromIframe('.bilibili-player-video-control');
+                    if (videoFocus !== null) {
+                        doClick(videoFocus);
+                    }
+                    shortcut.shortcutsTips("移动", "到播放器焦点");
+                },
+                focusDanmakuInput: function(e) {
+                    var controlBtn = querySelectorFromIframe("input.bilibili-player-video-danmaku-input");
+                    if (controlBtn !== null) {
+                        var adjustPlayerAutoHideControlBar = querySelectorFromIframe("#adjustPlayerAutoHideSendbar");
+                        if (adjustPlayerAutoHideControlBar !== null) {
+                            var playerVideoControl = querySelectorFromIframe(".bilibili-player-video-control-wrap");
+                            playerVideoControl.style = "opacity: 1; visibility: visible";
+
+                            var sendbar = querySelectorFromIframe(".bilibili-player-video-sendbar");
+                            sendbar.style = "opacity: 1 !important; visibility: visible !important; outline: none;";
+                            sendbar.setAttribute("tabindex", "-1");
+
+                            var sendbarBlurEvent = function(e) {
+                                controlBtn.focus();
+                                sendbar.removeEventListener('blur', sendbarBlurEvent, false);
+                            };
+                            var danmakuInputKeydownEvent = function(e) {
+                                if (e.keyCode == 9) {
+                                    querySelectorFromIframe('.bilibili-player-video video').focus();
+                                    querySelectorFromIframe(".bilibili-player-video-sendbar").style = "opacity: 1;";
+                                    querySelectorFromIframe(".bilibili-player-video-control-wrap").style = "";
+                                    e.preventDefault();
+                                    controlBtn.removeEventListener('keydown', danmakuInputKeydownEvent, false);
+                                }
+                            };
+                            sendbar.addEventListener("blur", sendbarBlurEvent, false);
+                            controlBtn.addEventListener("keydown", danmakuInputKeydownEvent, false);
+                        }
+                        e.preventDefault();
+
+                        setTimeout(function() {
+                            controlBtn.focus();
+                        }, 200);
+
+                        shortcut.shortcutsTips("定位", "到弹幕框焦点");
+                    }
+                },
+                shortcutsTips: function(type, value) {
+                    try {
+                        var timeoutID;
+                        clearTimeout(this.timeoutID);
+
+                        var tips = querySelectorFromIframe('#bilibiliPlayer > .bilibili-player-area > .bilibili-player-video-wrap > #adjust-player-shortcuts-tips');
+                        if (tips === null) {
+                            var tipsElement = document.createElement('div');
+                            tipsElement.id = "adjust-player-shortcuts-tips";
+                            tipsElement.style = "display: block; width:auto; opacity: 0;";
+                            tipsElement.className = "bilibili-player-volumeHint";
+                            tipsElement.innerHTML = type + ":" + value;
+                            querySelectorFromIframe('#bilibiliPlayer > .bilibili-player-area > .bilibili-player-video-wrap ').appendChild(tipsElement);
+                            tipsElement.style = "display: block; width:auto; opacity: 1; margin-left:-" + (tipsElement.offsetWidth / 2) + "px";
+                        } else {
+                            tips.innerHTML = type + ":" + value;
+                            tips.style = "display: block; width:auto; opacity: 1; margin-left:-" + (tips.offsetWidth / 2) + "px";
+                        }
+
+                        this.timeoutID = setTimeout(function() {
+                            var adjustPlayerShortcutsTips = querySelectorFromIframe('#bilibiliPlayer > .bilibili-player-area > .bilibili-player-video-wrap > #adjust-player-shortcuts-tips');
+                            if (adjustPlayerShortcutsTips !== null) {
+                                adjustPlayerShortcutsTips.style = "display: block;width:auto;opacity: 0;";
+                            }
+                        }, 1000);
+                    } catch (e) {
+                        console.log('shortcutsTips：' + e);
+                    }
+                },
+                shortcutsEvent: function(type, kCode, event) {
+                    if (typeof kCode === 'undefined' || kCode === "" || kCode === null) {
+                        return;
+                    }
+
+                    var isCombinationKey = function() {
+                        var keys = kCode.split("+");
+                        if (keys.length > 1) {
+                            keys[1] = parseInt(keys[1]);
+                            return {
+                                CombinationKey: true,
+                                keys: keys
+                            };
+                        } else {
+                            return {
+                                CombinationKey: false,
+                                keys: parseInt(kCode)
+                            };
+                        }
+                    };
+
+                    var executeEvent = function() {
+                        switch (type) {
+                            case "playPause":
+                                shortcut.playPause();
+                                break;
+                            case "prevVideoFramerate":
+                                shortcut.videoFramerate("prev");
+                                break;
+                            case "nextVideoFramerate":
+                                shortcut.videoFramerate("next");
+                                break;
+                            case "showHideDanmuku":
+                                shortcut.showHideDanmuku();
+                                break;
+                            case "addVideoSpeed":
+                                shortcut.videoSpeed("add");
+                                break;
+                            case "subVideoSpeed":
+                                shortcut.videoSpeed("sub");
+                                break;
+                            case "resetVideoSpeed":
+                                shortcut.videoSpeed("reset");
+                                break;
+                            case "playerWide":
+                                shortcut.playerWide();
+                                break;
+                            case "fullscreen":
+                                shortcut.fullscreen();
+                                break;
+                            case "webfullscreen":
+                                shortcut.webfullscreen();
+                                break;
+                            case "prevPlist":
+                                shortcut.gotoPlist("prev");
+                                break;
+                            case "nextPlist":
+                                shortcut.gotoPlist("next");
+                                break;
+                            case "videoMute":
+                                shortcut.videoMute();
+                                break;
+                            case "lightOnOff":
+                                shortcut.lightOnOff();
+                                break;
+                            case "loopVideoOnOff":
+                                shortcut.loopVideoOnOff();
+                                break;
+                            case "focusPlayer":
+                                shortcut.focusPlayer();
+                                break;
+                            case "moveToPlayerFocus":
+                                shortcut.moveToPlayerFocus();
+                                break;
+                            case "focusDanmakuInput":
+                                shortcut.focusDanmakuInput(event);
+                                break;
+                            default:
+                                break;
+                        }
+                    };
+
+                    var k = isCombinationKey(kCode);
+                    if (k.CombinationKey) {
+                        if (event.ctrlKey || event.altKey || event.shiftKey) {
+                            if (k.keys[0] === "shift") {
+                                if (event.shiftKey && event.keyCode === k.keys[1]) {
+                                    executeEvent(type);
+                                    return;
+                                }
+                            } else if (k.keys[0] === "ctrl") {
+                                if (event.ctrlKey && event.keyCode === k.keys[1]) {
+                                    executeEvent(type);
+                                    return;
+                                }
+                            } else if (k.keys[0] === "alt") {
+                                if (event.altKey && event.keyCode === k.keys[1]) {
+                                    executeEvent(type);
+                                    return;
+                                }
+                            }
+                        }
+                    } else {
+                        if (event.ctrlKey || event.altKey || event.shiftKey) {
+                            return;
+                        } else {
+                            if (event.keyCode === k.keys) {
+                                executeEvent(type);
+                                return;
+                            }
+                        }
+                    }
+                },
+                init: function(set) {
+                    if (typeof set !== 'undefined') {
+                        try {
+                            if (typeof set.shortcutsHideTips !== 'undefined') {
+                                var css = [
+                                    '#adjust-player-shortcuts-tips{display: none!important;}'
+                                ];
+                                //console.log(resizableElementWidth + "\n" + resizableElementHeight);
+                                var node = document.createElement('style');
+                                node.type = 'text/css';
+                                node.id = 'showTips';
+                                node.appendChild(document.createTextNode(css.join('')));
+                                var showTipsCSS = document.querySelector("#showTips");
+                                if (showTipsCSS !== null) {
+                                    showTipsCSS.remove();
+                                }
+                                node.appendChild(document.createTextNode(css.join('')));
+                                document.documentElement.appendChild(node);
+                            }
+                            if (set.shortcutsSwitch !== true) {
+                                return;
+                            }
+
+                            var shortcutsEventObj = {};
+                            for (var prop in set) {
+                                if (set.hasOwnProperty(prop)) {
+                                    var KeyCode = prop.indexOf('KeyCode');
+                                    if (KeyCode !== -1) {
+                                        shortcutsEventObj[set[prop]] = prop.replace(/KeyCode/gi, '');
+                                    }
+                                }
+                            }
+
+                            function bindEvent(event) {
+                                //console.log(shortcutsEventObj);
+                                if (event.target.nodeName === "INPUT") {
+                                    return;
+                                }
+                                if (event.target.nodeName === "TEXTAREA") {
+                                    return;
+                                }
+
+                                var focused = document.activeElement;
+                                if (focused.nodeName === "IFRAME") {
+                                    window.top.focus();
+                                }
+
+                                if (set.shortcutsVolumeSeekingGlobal === true) {
+                                    //arrowKeys
+                                    if (event.keyCode === 37 || event.keyCode === 38 || event.keyCode === 39 || event.keyCode === 40) {
+                                        //event.stopPropagation();
+                                        var videoFocus = function() {
+                                            var videoControl = querySelectorFromIframe('.bilibili-player-video-control');
+                                            if (videoControl !== null) {
+                                                doClick(videoControl);
+                                            }
+                                        };
+                                        videoFocus();
+                                    }
+                                }
+
+                                if (event.shiftKey) {
+                                    var shiftEventName = shortcutsEventObj['shift+' + event.keyCode];
+                                    if (typeof shiftEventName !== 'undefined') {
+                                        shiftEventName = shiftEventName.replace(/shift\+/gi, '');
+                                        if (set[shiftEventName] === true) {
+                                            shortcut.shortcutsEvent(shiftEventName, set[shiftEventName + 'KeyCode'], event);
+                                            return;
+                                        }
+                                    }
+                                }
+                                if (event.ctrlKey) {
+                                    var ctrlEventName = shortcutsEventObj['ctrl+' + event.keyCode];
+                                    if (typeof ctrlEventName !== 'undefined') {
+                                        ctrlEventName = ctrlEventName.replace(/ctrl\+/gi, '');
+                                        if (set[ctrlEventName] === true) {
+                                            shortcut.shortcutsEvent(ctrlEventName, set[ctrlEventName + 'KeyCode'], event);
+                                            return;
+                                        }
+                                    }
+                                }
+                                if (event.altKey) {
+                                    var altEventName = shortcutsEventObj['alt+' + event.keyCode];
+                                    if (typeof altEventName !== 'undefined') {
+                                        altEventName = altEventName.replace(/alt\+/gi, '');
+                                        if (set[altEventName] === true) {
+                                            shortcut.shortcutsEvent(altEventName, set[altEventName + 'KeyCode'], event);
+                                            return;
+                                        }
+                                    }
+                                }
+
+                                var eventName = shortcutsEventObj[event.keyCode];
+                                if (typeof eventName !== 'undefined') {
+                                    if (set[eventName] === true) {
+                                        shortcut.shortcutsEvent(eventName, set[eventName + 'KeyCode'], event);
+                                        return;
+                                    }
+                                }
+                            }
+
+                            var iframe = document.querySelector('iframe.bilibiliHtml5Player');
+                            if (iframe !== null) {
+                                iframe.contentWindow.document.addEventListener("keydown", bindEvent, false);
+                            }
+                            document.addEventListener("keydown", bindEvent, false);
+                        } catch (e) {
+                            console.log('shortcuts：' + e);
+                        }
+                    }
+                }
+            };
+            shortcut.init(set);
+        },
+        adjust: function(setting, isReload) {
+            var video = querySelectorFromIframe('.bilibili-player-video video');
+            //给老版本初始化“双击全屏延时”的默认值
+            if (setting.doubleClickFullScreen === true && typeof setting.doubleClickFullScreenDelayed === 'undefined') {
+                adjustPlayer.doubleClickFullScreen(setting.doubleClickFullScreen, 200);
+            } else {
+                adjustPlayer.doubleClickFullScreen(setting.doubleClickFullScreen, setting.doubleClickFullScreenDelayed);
+            }
+            //初始化“迷你播放器尺寸”的默认值
+            if (setting.resizePlayer === true && typeof setting.resizeMiniPlayer === 'undefined') {
+                adjustPlayer.resizeMiniPlayer(true, 320);
+            } else {
+                adjustPlayer.resizeMiniPlayer(setting.resizeMiniPlayer, setting.resizeMiniPlayerSize, setting.resizeMiniPlayerSizeResizable);
+            }
+            //修复没开启“自动宽屏模式”自动关灯失效
+            setTimeout(function() {
+                adjustPlayer.autoLightOn(setting.autoLightOn);
+            }, 200);
+            //“隐藏弹幕”最后执行
+            var danmakuSettingLitePanel = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-setting .bp-svgicon');
+            createMouseoverAndMouseoutEvent('show', danmakuSettingLitePanel).then(function(value) {
+                if (value === 'show') {
+                    Promise.all([
+                        adjustPlayer.hideDanmukuFilterType(setting.hideDanmukuFilterType, setting.hideDanmukuFilterType_Type),
+                        adjustPlayer.danmukuPreventShade(setting.danmukuPreventShade, setting.danmukuPreventShadeType)
+                    ]).then(function(values) {
+                        createMouseoverAndMouseoutEvent('hide', danmakuSettingLitePanel).then(function(value) {
+                            if (value === 'hide') {
+                                adjustPlayer.hideDanmuku(setting.hideDanmuku, setting.hideDanmukuType);
+                            }
+                        });
+                    });
+                }
+            });
+            adjustPlayer.autoLoopVideo(setting.autoLoopVideo);
+            adjustPlayer.tabDanmulist(setting.tabDanmulist);
+            adjustPlayer.videoSeekingShowSendbar(setting.videoSeekingShowSendbar, video);
+            adjustPlayer.autoHideSendbar(setting.autoHideSendbar, setting.shortcuts.focusDanmakuInput, video);
+            adjustPlayer.autoPlay(setting.autoPlay, video);
+            adjustPlayer.autoVideoSpeed(setting.autoVideoSpeed, setting.autoVideoSpeedValue, video);
+            adjustPlayer.skipSetTime(setting.skipSetTime, setting.skipSetTimeValue, video);
+            adjustPlayer.autoNextPlist(setting.autoNextPlist);
+
+            if (isReload) {
+                var screenMode = sessionStorage.getItem("adjustPlayer_screenMode");
+                setTimeout(function() {
+                    if (screenMode === 'widescreen') {
+                        adjustPlayer.fixWidescreenFocusPlayer(setting, isReload, adjustPlayer.autoWidescreen);
+                        adjustPlayer.autoFocusPlayer(setting.autoFocusPlayer, setting.autoFocusPlayerOffsetType, setting.autoFocusPlayerOffsetValue);
+                    } else if (screenMode === 'webfullscreen') {
+                        adjustPlayer.autoWebFullScreen(true);
+                    } else if (screenMode === 'normal') {
+                        adjustPlayer.autoFocusPlayer(setting.autoFocusPlayer, setting.autoFocusPlayerOffsetType, setting.autoFocusPlayerOffsetValue);
+                    }
+                    adjustPlayer.resizePlayer(setting.resizePlayer, setting.resizePlayerWidth, setting.resizePlayerRatio, setting.resizePlayerVideoInfoAndUpInfoPosition, setting.autoHideSendbar);
+                }, 800);
+            } else {
+                if (setting.autoWebFullScreen === true) {
+                    adjustPlayer.autoWebFullScreen(setting.autoWebFullScreen);
+                } else {
+                    //开启“网页全屏”后，不加载的功能
+                    adjustPlayer.fixWidescreenFocusPlayer(setting, isReload, adjustPlayer.autoWidescreen);
+                    adjustPlayer.autoFocusPlayer(setting.autoFocusPlayer, setting.autoFocusPlayerOffsetType, setting.autoFocusPlayerOffsetValue);
+                    adjustPlayer.resizePlayer(setting.resizePlayer, setting.resizePlayerWidth, setting.resizePlayerRatio, setting.resizePlayerVideoInfoAndUpInfoPosition, setting.autoHideSendbar);
+                }
+                adjustPlayer.shortcuts(setting.shortcuts);
+            }
+        },
+        init: function(firstrun, setting) {
+            unsafeWindow.adjustPlayerTest = true;
+            window.adjustPlayerSetting = setting;
+            //修复后台打开视频页面脚本加载失效
+            var documentState = document.visibilityState;
+            if (documentState === "visible") {
+                //初始化
+                console.log('adjustPlayer(ver.stardust):\n' + 'loadPage:' + location.href);
+                //显示帮助提示
+                var isFirstrun = function() {
+                    if (firstrun) {
+                        config.setValue('player_firstrun', false);
+                        configWindow.help();
+                    }
+                };
+                //总计时器
+                var timerCount = 0;
+                var timer = window.setInterval(function callback() {
+                    var player = isPlayer();
+                    if (player === "flashPlayer") {
+                        configWindow.help();
+                        clearInterval(timer);
+                    } else if (player === "html5Player") {
+
+                        var stardustPlayer = document.querySelector('#entryOld');
+                        if (stardustPlayer === null) {
+                            clearInterval(timer);
+                            console.log('adjustPlayer(ver.stardust):\n旧版播放器页面不支持\n');
+                            return;
+                        }
+
+                        var readyState = querySelectorFromIframe('.bilibili-player-video-panel');
+                        var video = querySelectorFromIframe('.bilibili-player-video video');
+                        var isReload = false;
+                        if (video !== null && readyState !== null) {
+                            if (readyState.getAttribute('style') !== null && readyState.getAttribute('style').search("display: none;") !== -1) {
+                                try {
+                                    createConfigBtn();
+                                    isFirstrun();
+                                    adjustPlayer.adjust(setting, isReload);
+                                    reloadPList.init();
+                                    console.log('adjustPlayer(ver.stardust):\nhtml5Player init success');
+                                } catch (e) {
+                                    clearInterval(timer);
+                                    console.log('adjustPlayer(ver.stardust):\nhtml5Player init error\n' + e);
+                                } finally {
+                                    reloadPList.getScreenMode();
+                                    clearInterval(timer);
+                                }
+                            }
+                        } else {
+                            //console.log(timerCount);
+                            timerCount++;
+                            if (timerCount >= 120) {
+                                timerCount = 0;
+                                clearInterval(timer);
+                                console.log('adjustPlayer(ver.stardust):\n html5Player init error: not find video');
+                            }
+                        }
+                    } else {
+                        //console.log(timerCount);
+                        timerCount++;
+                        if (timerCount >= 120) {
+                            timerCount = 0;
+                            clearInterval(timer);
+                            console.log('adjustPlayer(ver.stardust):\n html5Player init error: timeout');
+                        }
+                    }
+                }, 800);
+            } else if (documentState === "hidden") {
+                //修复后台打开视频页面脚本加载失效
+                var hidden, visibilityChange;
+                if (typeof document.hidden !== "undefined") {
+                    hidden = "hidden";
+                    visibilityChange = "visibilitychange";
+                } else if (typeof document.msHidden !== "undefined") {
+                    hidden = "msHidden";
+                    visibilityChange = "msvisibilitychange";
+                } else if (typeof document.webkitHidden !== "undefined") {
+                    hidden = "webkitHidden";
+                    visibilityChange = "webkitvisibilitychange";
+                }
+
+                function visibilitychangeEvent() {
+                    if (typeof document.addEventListener === "undefined" || typeof document[hidden] === "undefined") {
+                        console.log("adjustPlayer:\n nonsupport the Page Visibility API.");
+                    } else {
+                        if (document.visibilityState === "visible") {
+                            init();
+                            document.removeEventListener(visibilityChange, visibilitychangeEvent, false);
+                        }
+                    }
+                }
+                document.addEventListener(visibilityChange, visibilitychangeEvent, false);
+            } else {
+                console.log("adjustPlayer:\n nonsupport the Page Visibility API.");
+            }
+        },
+        reload: function(setting) {
+            //多P页面重加载
+            console.log('adjustPlayer(ver.stardust):\n' + 'reloadPage:' + location.href);
+            //总计时器
+            var timerCount = 0;
+            var timer = window.setInterval(function callback() {
+                var player = isPlayer();
+                if (player === "flashPlayer") {
+                    try {
+                        setTimeout(function() {
+                            createConfigBtn();
+                            configWindow.help();
+                        }, 1000);
+                        console.log('adjustPlayer(ver.stardust):\nflashPlayer init success');
+                    } catch (e) {
+                        clearInterval(timer);
+                        console.log('adjustPlayer(ver.stardust):\nflashPlayer init error\n' + e);
+                    } finally {
+                        clearInterval(timer);
+                    }
+                } else if (player === "html5Player") {
+                    var readyState = querySelectorFromIframe('.bilibili-player-video-panel');
+                    var video = querySelectorFromIframe('.bilibili-player-video video');
+                    var isReload = true;
+                    if (video !== null && readyState !== null) {
+                        if (readyState.getAttribute('style') !== null && readyState.getAttribute('style').search("display: none;") !== -1) {
+                            try {
+                                createConfigBtn();
+                                adjustPlayer.adjust(setting, isReload);
+                                reloadPList.init();
+                                console.log('adjustPlayer(ver.stardust):\nhtml5Player reload success');
+                            } catch (e) {
+                                clearInterval(timer);
+                                console.log('adjustPlayer(ver.stardust):\nhtml5Player reload error\n' + e);
+                            } finally {
+                                reloadPList.getScreenMode();
+                                clearInterval(timer);
+                            }
+                        }
+                    } else {
+                        //console.log(timerCount);
+                        timerCount++;
+                        if (timerCount >= 120) {
+                            timerCount = 0;
+                            clearInterval(timer);
+                            console.log('adjustPlayer(ver.stardust):\n html5Player reload error: not find video');
+                        }
+                    }
+                } else {
+                    //console.log(timerCount);
+                    timerCount++;
+                    if (timerCount >= 120) {
+                        timerCount = 0;
+                        clearInterval(timer);
+                        console.log('adjustPlayer(ver.stardust):\n html5Player reload error: timeout');
+                    }
+                }
+            }, 800);
+        }
+    };
+    var reloadPList = {
+        getPListId: function(href) {
+            var id;
+            if (typeof href !== 'undefined') {
+                id = href.match(/p=\d*/g) || href.match(/#page=\d*/g) || href.match(/ep\d*/g) || href.match(/ss\d*#\d*/g) || href.match(/watchlater\/#\/av\d*\/p\d*/g) || href.match(/av\d*/g);
+                if (id !== null) {
+                    id = id[0].replace(/\D/g, '');
+                } else {
+                    id = '';
+                }
+            }
+            return id;
+        },
+        getScreenMode: function() {
+            var player = isPlayer();
+            if (player === "html5Player") {
+                var screenMode = 'normal';
+                var player = querySelectorFromIframe('#bilibiliPlayer').getAttribute("class");
+                if (player !== null) {
+                    if (player.search("widescreen") !== -1) {
+                        screenMode = 'widescreen';
+                    } else if (player.search("webfullscreen") !== -1) {
+                        screenMode = 'webfullscreen';
+                    } else if (player.search("fullscreen") !== -1) {
+                        screenMode = 'fullscreen';
+                    } else {
+                        screenMode = 'normal';
+                    }
+                }
+                sessionStorage.setItem("adjustPlayer_screenMode", screenMode);
+            }
+        },
+        init: function() {
+            (function(history) {
+                var pushState = history.pushState;
+                history.pushState = function(state) {
+                    if (typeof history.onpushstate == "function") {
+                        history.onpushstate({ state: state });
+                    }
+                    return pushState.apply(history, arguments);
+                };
+            })(window.history);
+
+            var pListId = reloadPList.getPListId(location.href);
+            window.adjustPlayerCurrentPListId = pListId;
+
+            window.onpopstate = history.onpushstate = function(e) {
+                var isReload = false;
+                var reloadTimer = null;
+                clearTimeout(this.reloadTimer);
+                this.reloadTimer = window.setTimeout(function() {
+                    if (isReload === false) {
+                        var newPlistId, oldPListId;
+                        newPlistId = reloadPList.getPListId(location.href);
+                        oldPListId = window.adjustPlayerCurrentPListId;
+                        if (newPlistId !== oldPListId) {
+                            console.log('reloadPList:\nnewPlistId:' + newPlistId + "\noldPListId:" + oldPListId);
+                            isReload = true;
+                            reloadPList.getScreenMode();
+                            if (typeof GM_getValue === 'function') {
+                                var setting = config.read();
+                                adjustPlayer.reload(setting);
+                            } else {
+                                var setting = config.read();
+                                setting.then(function(value) {
+                                    adjustPlayer.reload(value);
+                                });
+                            }
+                        }
+                    } else {
+                        return;
+                    }
+                }, 200);
+            }
+        }
+    };
+    var config = {
+        storageType: function() {
+            if (window.localStorage) {
+                var type = localStorage.getItem('adjustPlayer_storageType');
+                if (type === "localStorage") {
+                    return "localStorage";
+                } else if (type === null || type === "extension") {
+                    return "extension";
+                } else {
+                    return "unknown";
+                }
+            } else {
+                console.log("adjustPlayer:获取设置失败，不支持localStorage");
+            }
+        },
+        getValue: function(value, defalutValue) {
+            var storageType = config.storageType();
+            if (storageType === "localStorage") {
+                var item;
+                if (typeof defalutValue !== "undefined" && item === null) {
+                    item = localStorage.getItem('adjustPlayer_localStorage_' + value);
+                    localStorage.setItem('adjustPlayer_localStorage_' + value, defalutValue);
+                } else {
+                    item = localStorage.getItem('adjustPlayer_localStorage_' + value);
+                }
+                item = JSON.parse(item);
+                return item;
+            } else if (storageType === "extension") {
+                if (typeof GM_getValue === 'function') {
+                    var item;
+                    if (typeof defalutValue !== 'undefined') {
+                        item = GM_getValue(value, defalutValue);
+                    } else {
+                        item = GM_getValue(value);
+                    }
+                    return item;
+                } else {
+                    if (typeof defalutValue !== 'undefined') {
+                        return GM.getValue(value, defalutValue);
+                    } else {
+                        return GM.getValue(value);
+                    }
+                }
+            } else {
+                console.log("adjustPlayer:读取" + value + "失败，未知存储类型");
+                item = null;
+                return item;
+            }
+        },
+        setValue: function(name, value) {
+            var storageType = config.storageType();
+            if (storageType === "localStorage") {
+                value = JSON.stringify(value);
+                localStorage.setItem('adjustPlayer_localStorage_' + name, value);
+            } else if (storageType === "extension") {
+                if (typeof GM_getValue === 'function') {
+                    GM_setValue(name, value);
+                } else {
+                    GM.setValue(name, value);
+                }
+            } else {
+                console.log("adjustPlayer:设置" + value + "失败，未知存储类型");
+            }
+        },
+        read: function() {
+            if (typeof GM_getValue === 'function') {
+                var adjustPlayerSetting = config.getValue('player_adjustPlayer');
+                if (typeof adjustPlayerSetting !== "undefined" && adjustPlayerSetting !== null) {
+                    return adjustPlayerSetting;
+                } else {
+                    var defaultConfig = config.restore();
+                    if (defaultConfig !== null) {
+                        return defaultConfig;
+                    } else {
+                        console.log("adjustPlayer:读取设置失败");
+                    }
+                }
+            } else {
+                return new Promise(function(resolve, reject) {
+                    var adjustPlayerSetting = config.getValue('player_adjustPlayer');
+                    adjustPlayerSetting.then(function(value) {
+                        if (typeof value !== "undefined" && value !== null) {
+                            resolve(value);
+                        } else {
+                            var defaultConfig = config.restore();
+                            defaultConfig.then(function(value) {
+                                if (value !== null) {
+                                    resolve(value);
+                                } else {
+                                    console.log("adjustPlayer:读取设置失败");
+                                }
+                            });
+                        }
+                    });
+                });
+            }
+        },
+        write: function(adjustPlayer) {
+            config.setValue('player_adjustPlayer', adjustPlayer);
+        },
+        restore: function() {
+            var defalutConfig = '{ "shortcuts": {} }';
+            config.setValue('player_adjustPlayer', JSON.parse(defalutConfig));
+            config.setValue('player_firstrun', true);
+            if (typeof GM_getValue === 'function') {
+                var item = config.getValue('player_adjustPlayer');
+                return item;
+            } else {
+                return new Promise(function(resolve, reject) {
+                    var item = config.getValue('player_adjustPlayer');
+                    item.then(function(value) {
+                        resolve(value);
+                    });
+                });
+            }
+        }
+    };
+    var dialog = {
+        create: function(name, title, bar, content, isModal) {
+            var isExist = document.querySelector('#adjust-player > #' + name);
+            if (isExist === null) {
+                var dialogElement = document.createElement('div');
+                dialogElement.id = name;
+                dialogElement.className = 'dialog';
+                dialogElement.innerHTML = '<div class="title">' + title + '' + bar + '</div>' + content;
+                if (isModal != null) {
+                    dialogElement.setAttribute("isModal", "true");
+                    dialogElement.setAttribute("modalParentId", isModal.getAttribute("id"));
+                    isModal.classList.add("modalWindow");
+                }
+                document.querySelector('#adjust-player').appendChild(dialogElement);
+                dialog.eventBinding(dialogElement, name);
+                //mask
+                document.querySelector('#adjust-player .adjust-player-mask').setAttribute("style", "display: block;");
+            }
+        },
+        close: function(element) {
+            if (element.getAttribute('isModal') === "true") {
+                var modalParent = document.querySelector('#' + element.getAttribute('modalParentId') + '');
+                if (modalParent !== null) {
+                    modalParent.classList.remove("modalWindow");
+                }
+            }
+            document.querySelector('#adjust-player').removeChild(element);
+            //mask
+            var adjustPlayer = document.querySelectorAll('#adjust-player > div.dialog').length;
+            if (adjustPlayer < 1) {
+                document.querySelector('#adjust-player .adjust-player-mask').removeAttribute("style");
+            }
+        },
+        eventBinding: function(element, name) {
+            element.addEventListener('mouseover', function(e) {
+                var adjustPlayerTooltip = document.querySelector('#adjust-player-tooltip');
+                var tooltip = e.target.getAttribute('tooltip');
+                if (e.target && tooltip !== null) {
+                    var left = e.clientX;
+                    var top = e.clientY;
+                    if (adjustPlayerTooltip === null) {
+                        var tooltipElement = document.createElement('div');
+                        tooltipElement.id = "adjust-player-tooltip";
+                        tooltipElement.style = 'left: ' + left + 'px;top: ' + top + 'px;margin:10px 0 0 -80px;color: #222;font-size:12px;line-height: 16px;text-align: left;display: block;position: fixed;background: #fff;border-radius: 4px;box-shadow: 0px 0px 1px 0px;width: 200px;overflow-wrap: break-word;padding: 4px;z-index: 999999;';
+                        tooltipElement.innerHTML = tooltip.replace(/\n/g, "<br/>");
+                        document.querySelector('#adjust-player').appendChild(tooltipElement);
+                    } else {
+                        adjustPlayerTooltip.style = 'left: ' + left + 'px;top: ' + top + 'px;margin:10px 0 0 -80px;color: #222;font-size:12px;line-height: 16px;text-align: left;display: block;position: fixed;background: #fff;border-radius: 4px;box-shadow: 0px 0px 1px 0px;width: 200px;overflow-wrap: break-word;padding: 4px;z-index: 999999;';
+                        adjustPlayerTooltip.innerHTML = tooltip.replace(/\n/g, "<br/>");
+                    }
+                } else {
+                    if (adjustPlayerTooltip !== null) {
+                        adjustPlayerTooltip.style = '';
+                        adjustPlayerTooltip.innerHTML = '';
+                    }
+                }
+            });
+            element.addEventListener('click', function(e) {
+                var action = e.target.getAttribute('action');
+                if (e.target && action !== null) {
+                    if (name === "main") {
+                        switch (action) {
+                            case 'shortcuts':
+                                configWindow.shortcutsWindow(e);
+                                break;
+                            case 'adjustPlayerSize':
+                                configWindow.adjustPlayerSize();
+                                break;
+                            case 'restoreDef':
+                                configWindow.restore();
+                                break;
+                            case 'save':
+                                configWindow.save();
+                                break;
+                            case 'childElementDisabledEvent':
+                                configWindow.childElementDisabledEvent(e.target.getAttribute("name"), e.target.getAttribute("disabledchildelement"));
+                                break;
+                            case 'storageType':
+                                configWindow.storageTypeWindow(e);
+                                break;
+                            default:
+                                break;
+                        }
+                    } else if (name === "shortcutsSetting") {
+                        switch (action) {
+                            case 'clear':
+                                configWindow.shortcutsSettingClear();
+                                break;
+                            case 'save':
+                                configWindow.shortcutsSettingSave();
+                                break;
+                            case 'cancel':
+                                configWindow.shortcutsSettingCancel();
+                                break;
+                            default:
+                                break;
+                        }
+                    } else if (name === "storageType") {
+                        switch (action) {
+                            case 'save':
+                                configWindow.storageTypeSave();
+                                break;
+                            case 'cancel':
+                                dialog.close(this);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    switch (action) {
+                        case 'help':
+                            configWindow.help();
+                            break;
+                        case 'close':
+                            dialog.close(this);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            });
+        }
+    };
+    var configWindow = {
+        create: function() {
+            var name = 'main';
+            var title = '哔哩哔哩播放器调整';
+            var bar = '<span class="btn" action="help">?</span><span class="btn" action="close">X</span>';
+            var content = commentToString(function() {
+                /*
          <form>
             <div class="wrapper">
             	<div class="left">
@@ -2338,201 +2337,201 @@
         </div>
         </form>
             */
-			});
-			dialog.create(name, title, bar, content);
-		},
-		load: function(formData) {
-			//loadData
-			var form = document.querySelector('#adjust-player #main form');
-			deserialize(form, formData);
-			//fix clonenode select value
-			form.onchange = function(e) {
-				var node = e.target;
-				var nodeName = node.nodeName;
-				if (nodeName === "SELECT") {
-					var options = node.options;
-					for (var i = 0; i < options.length; i++) {
-						if (i === options.selectedIndex) {
-							node.options[node.selectedIndex].setAttribute("selected", "");
-						} else {
-							node.options[i].removeAttribute("selected");
-						}
-					}
-				}
-			};
-			//init bindEvent
-			configWindow.mainWindowResizeEvent();
-			//childElementDisabledEvent
-			var childElementDisabledEventActions = document.querySelectorAll('#adjust-player [action="childElementDisabledEvent"]'),
-				i;
-			for (i = 0; i < childElementDisabledEventActions.length; ++i) {
-				var action = childElementDisabledEventActions[i];
-				configWindow.childElementDisabledEvent(action.getAttribute("name"), action.getAttribute("disabledchildelement"));
-			}
-			//version
-			try {
-				var version = document.querySelector('#adjust-player form span.ver').innerHTML = "版本:" + GM_info.script.version;
-			} catch (e) {
-				var version = document.querySelector('#adjust-player form span.ver').innerHTML = "版本:无法获取";
-			}
-			//flashPlayer tips
-			var player = isPlayer();
-			if (player === "flashPlayer") {
-				configWindow.help();
-			}
-		},
-		save: function() {
-			try {
-				//clone form
-				var newForm = document.createElement('form');
-				//checked
-				var func = document.querySelectorAll('#adjust-player #main form label[fname]'),
-					i;
-				for (i = 0; i < func.length; ++i) {
-					var fname = func[i].getAttribute('fname');
-					if (fname !== null) {
-						var checkedFunc = func[i].querySelector('[type="checkbox"]:checked[name="' + fname + '"]');
-						if (checkedFunc !== null) {
-							var cloneNode = checkedFunc.parentNode.cloneNode(true);
-							newForm.appendChild(cloneNode);
-						}
-					}
-				}
-				//shortcuts
-				var shortcutsGroup = document.querySelector('#adjust-player #main form fieldset.shortcutsGroup');
-				var shortcutsGroupCloneNode = shortcutsGroup.cloneNode(true);
-				newForm.appendChild(shortcutsGroupCloneNode);
+            });
+            dialog.create(name, title, bar, content);
+        },
+        load: function(formData) {
+            //loadData
+            var form = document.querySelector('#adjust-player #main form');
+            deserialize(form, formData);
+            //fix clonenode select value
+            form.onchange = function(e) {
+                var node = e.target;
+                var nodeName = node.nodeName;
+                if (nodeName === "SELECT") {
+                    var options = node.options;
+                    for (var i = 0; i < options.length; i++) {
+                        if (i === options.selectedIndex) {
+                            node.options[node.selectedIndex].setAttribute("selected", "");
+                        } else {
+                            node.options[i].removeAttribute("selected");
+                        }
+                    }
+                }
+            };
+            //init bindEvent
+            configWindow.mainWindowResizeEvent();
+            //childElementDisabledEvent
+            var childElementDisabledEventActions = document.querySelectorAll('#adjust-player [action="childElementDisabledEvent"]'),
+                i;
+            for (i = 0; i < childElementDisabledEventActions.length; ++i) {
+                var action = childElementDisabledEventActions[i];
+                configWindow.childElementDisabledEvent(action.getAttribute("name"), action.getAttribute("disabledchildelement"));
+            }
+            //version
+            try {
+                var version = document.querySelector('#adjust-player form span.ver').innerHTML = "版本:" + GM_info.script.version;
+            } catch (e) {
+                var version = document.querySelector('#adjust-player form span.ver').innerHTML = "版本:无法获取";
+            }
+            //flashPlayer tips
+            var player = isPlayer();
+            if (player === "flashPlayer") {
+                configWindow.help();
+            }
+        },
+        save: function() {
+            try {
+                //clone form
+                var newForm = document.createElement('form');
+                //checked
+                var func = document.querySelectorAll('#adjust-player #main form label[fname]'),
+                    i;
+                for (i = 0; i < func.length; ++i) {
+                    var fname = func[i].getAttribute('fname');
+                    if (fname !== null) {
+                        var checkedFunc = func[i].querySelector('[type="checkbox"]:checked[name="' + fname + '"]');
+                        if (checkedFunc !== null) {
+                            var cloneNode = checkedFunc.parentNode.cloneNode(true);
+                            newForm.appendChild(cloneNode);
+                        }
+                    }
+                }
+                //shortcuts
+                var shortcutsGroup = document.querySelector('#adjust-player #main form fieldset.shortcutsGroup');
+                var shortcutsGroupCloneNode = shortcutsGroup.cloneNode(true);
+                newForm.appendChild(shortcutsGroupCloneNode);
 
-				//serialize
-				var formData = serialize(newForm);
+                //serialize
+                var formData = serialize(newForm);
 
-				//autoFocusPlayer
-				if (formData.autoFocusPlayerOffsetType !== 'defalut' && formData.autoFocusPlayer === true) {
-					var autoFocusPlayerOffsetValue = parseInt(formData.autoFocusPlayerOffsetValue.match(/^\+?[0-9]*$/g)[0]);
-					if (!isNaN(autoFocusPlayerOffsetValue)) {
-						formData.autoFocusPlayerOffsetValue = autoFocusPlayerOffsetValue;
-					} else {
-						formData.autoFocusPlayerOffsetValue = 0;
-					}
-				} else {
-					delete formData.autoFocusPlayerOffsetType;
-					delete formData.autoFocusPlayerOffsetValue;
-				}
-				//skipSetTime
-				if (formData.skipSetTime === true) {
-					var skipSetTimeValueMinutes = parseInt(formData.skipSetTimeValueMinutes.match(/^\+?[0-9]*$/g)[0]);
-					var skipSetTimeValueSeconds = parseInt(formData.skipSetTimeValueSeconds.match(/^\+?[0-9]*$/g)[0]);
-					if (!isNaN(skipSetTimeValueMinutes)) {
-						formData.skipSetTimeValueMinutes = skipSetTimeValueMinutes;
-						formData.skipSetTimeValue = skipSetTimeValueMinutes * 60;
-					} else {
-						delete formData.skipSetTimeValueMinutes;
-					}
-					if (!isNaN(skipSetTimeValueSeconds)) {
-						formData.skipSetTimeValueSeconds = skipSetTimeValueSeconds;
-						formData.skipSetTimeValue += skipSetTimeValueSeconds;
-					} else {
-						delete formData.skipSetTimeValueSeconds;
-					}
-				} else {
-					delete formData.skipSetTimeValue;
-					delete formData.skipSetTimeValueMinutes;
-					delete formData.skipSetTimeValueSeconds;
-				}
-				//resizeMiniPlayer
-				if (formData.resizeMiniPlayer === true) {
-					var resizeMiniPlayerSize = parseInt(formData.resizeMiniPlayerSize.match(/^\+?[0-9]*$/g)[0]);
-					if (!isNaN(resizeMiniPlayerSize)) {
-						formData.resizeMiniPlayerSize = resizeMiniPlayerSize;
-					} else {
-						formData.autoFocusOffsetValue = 320;
-					}
-				} else {
-					delete formData.resizeMiniPlayerSize;
-				}
-				//doubleClickFullScreenDelayed
-				if (formData.doubleClickFullScreen === true) {
-					var doubleClickFullScreenDelayed = parseInt(formData.doubleClickFullScreenDelayed.match(/^\+?[0-9]*$/g)[0]);
-					if (!isNaN(doubleClickFullScreenDelayed)) {
-						formData.doubleClickFullScreenDelayed = doubleClickFullScreenDelayed;
-					} else {
-						formData.doubleClickFullScreenDelayed = 200;
-					}
-				} else {
-					delete formData.doubleClickFullScreenDelayed;
-				}
+                //autoFocusPlayer
+                if (formData.autoFocusPlayerOffsetType !== 'defalut' && formData.autoFocusPlayer === true) {
+                    var autoFocusPlayerOffsetValue = parseInt(formData.autoFocusPlayerOffsetValue.match(/^\+?[0-9]*$/g)[0]);
+                    if (!isNaN(autoFocusPlayerOffsetValue)) {
+                        formData.autoFocusPlayerOffsetValue = autoFocusPlayerOffsetValue;
+                    } else {
+                        formData.autoFocusPlayerOffsetValue = 0;
+                    }
+                } else {
+                    delete formData.autoFocusPlayerOffsetType;
+                    delete formData.autoFocusPlayerOffsetValue;
+                }
+                //skipSetTime
+                if (formData.skipSetTime === true) {
+                    var skipSetTimeValueMinutes = parseInt(formData.skipSetTimeValueMinutes.match(/^\+?[0-9]*$/g)[0]);
+                    var skipSetTimeValueSeconds = parseInt(formData.skipSetTimeValueSeconds.match(/^\+?[0-9]*$/g)[0]);
+                    if (!isNaN(skipSetTimeValueMinutes)) {
+                        formData.skipSetTimeValueMinutes = skipSetTimeValueMinutes;
+                        formData.skipSetTimeValue = skipSetTimeValueMinutes * 60;
+                    } else {
+                        delete formData.skipSetTimeValueMinutes;
+                    }
+                    if (!isNaN(skipSetTimeValueSeconds)) {
+                        formData.skipSetTimeValueSeconds = skipSetTimeValueSeconds;
+                        formData.skipSetTimeValue += skipSetTimeValueSeconds;
+                    } else {
+                        delete formData.skipSetTimeValueSeconds;
+                    }
+                } else {
+                    delete formData.skipSetTimeValue;
+                    delete formData.skipSetTimeValueMinutes;
+                    delete formData.skipSetTimeValueSeconds;
+                }
+                //resizeMiniPlayer
+                if (formData.resizeMiniPlayer === true) {
+                    var resizeMiniPlayerSize = parseInt(formData.resizeMiniPlayerSize.match(/^\+?[0-9]*$/g)[0]);
+                    if (!isNaN(resizeMiniPlayerSize)) {
+                        formData.resizeMiniPlayerSize = resizeMiniPlayerSize;
+                    } else {
+                        formData.autoFocusOffsetValue = 320;
+                    }
+                } else {
+                    delete formData.resizeMiniPlayerSize;
+                }
+                //doubleClickFullScreenDelayed
+                if (formData.doubleClickFullScreen === true) {
+                    var doubleClickFullScreenDelayed = parseInt(formData.doubleClickFullScreenDelayed.match(/^\+?[0-9]*$/g)[0]);
+                    if (!isNaN(doubleClickFullScreenDelayed)) {
+                        formData.doubleClickFullScreenDelayed = doubleClickFullScreenDelayed;
+                    } else {
+                        formData.doubleClickFullScreenDelayed = 200;
+                    }
+                } else {
+                    delete formData.doubleClickFullScreenDelayed;
+                }
 
-				config.write(formData);
-				console.log(formData);
-				unsafeWindow.alert('保存设置成功');
-				location.reload();
-			} catch (e) {
-				unsafeWindow.alert('保存设置失败');
-				location.reload();
-			}
-		},
-		restore: function() {
-			var defaultConfig = config.restore();
-			if (typeof defaultConfig !== 'undefined') {
-				unsafeWindow.alert('恢复设置成功');
-			} else {
-				unsafeWindow.alert('恢复设置失败');
-			}
-			location.reload();
-		},
-		mainWindowResizeEvent: function() {
-			var wrapper = document.querySelector('#adjust-player #main form .wrapper');
-			var mainWindow = document.querySelector('#adjust-player #main');
-			var mainWindowHeight = mainWindow.offsetHeight;
-			mainWindow.style = 'margin-top:-' + (mainWindowHeight / 2).toFixed(0) + 'px;';
-			var windowHeight = window.innerHeight;
-			if (windowHeight < (mainWindowHeight + 200)) {
-				wrapper.style = "max-height:" + (windowHeight - 200) + 'px; padding-right:10px;';
-				mainWindow.style = 'margin-top:-' + (mainWindow.offsetHeight / 2) + 'px;';
-			}
-		},
-		childElementDisabledEvent: function(parent, childAndType) {
-			var childAndType = childAndType.split(",");
-			var type = childAndType[0];
-			var child = childAndType[1];
-			var disabledEvent;
+                config.write(formData);
+                console.log(formData);
+                unsafeWindow.alert('保存设置成功');
+                location.reload();
+            } catch (e) {
+                unsafeWindow.alert('保存设置失败');
+                location.reload();
+            }
+        },
+        restore: function() {
+            var defaultConfig = config.restore();
+            if (typeof defaultConfig !== 'undefined') {
+                unsafeWindow.alert('恢复设置成功');
+            } else {
+                unsafeWindow.alert('恢复设置失败');
+            }
+            location.reload();
+        },
+        mainWindowResizeEvent: function() {
+            var wrapper = document.querySelector('#adjust-player #main form .wrapper');
+            var mainWindow = document.querySelector('#adjust-player #main');
+            var mainWindowHeight = mainWindow.offsetHeight;
+            mainWindow.style = 'margin-top:-' + (mainWindowHeight / 2).toFixed(0) + 'px;';
+            var windowHeight = window.innerHeight;
+            if (windowHeight < (mainWindowHeight + 200)) {
+                wrapper.style = "max-height:" + (windowHeight - 200) + 'px; padding-right:10px;';
+                mainWindow.style = 'margin-top:-' + (mainWindow.offsetHeight / 2) + 'px;';
+            }
+        },
+        childElementDisabledEvent: function(parent, childAndType) {
+            var childAndType = childAndType.split(",");
+            var type = childAndType[0];
+            var child = childAndType[1];
+            var disabledEvent;
 
-			if (type === "input") {
-				var parentElement = document.querySelector('#adjust-player form input[name="' + parent + '"]');
-				var childElements = child.split(";");
-				var setDisabled = function(disabled) {
-					for (var i = 0; i < childElements.length; ++i) {
-						if (disabled) {
-							document.querySelector('#adjust-player form [name="' + childElements[i] + '"]').setAttribute('disabled', '');
-						} else {
-							document.querySelector('#adjust-player form [name="' + childElements[i] + '"]').removeAttribute('disabled');
-						}
-					}
-				};
-				disabledEvent = parentElement.checked ? setDisabled(false) : setDisabled(true);
-			} else if (type === "div") {
-				var parentElement = document.querySelector('#adjust-player form input[name="' + parent + '"]');
-				var childElement = document.querySelector('#adjust-player form div.' + child + '');
-				disabledEvent = parentElement.checked ? childElement.classList.remove("disabled") : childElement.classList.add("disabled");
-			}
-		},
-		adjustPlayerSize: function() {
-			//init
-			if (matchURL.isWatchlater() || matchURL.isOldBangumi() || matchURL.isNewBangumi()) {
-				if (window.confirm('调整大小功能不支持在\n【稍后观看页面】，【番剧页面】 中使用。\n点确定会跳转到测试页面，请在测试页面中重新调整\n取消放弃调整')) {
-					window.top.location = "http://www.bilibili.com/video/av120040/";
-					return;
-				} else {
-					return;
-				}
-			}
-			document.querySelector('#adjust-player').setAttribute("style", "display: none;");
-			unsafeWindow.scrollTo(0, 0);
+            if (type === "input") {
+                var parentElement = document.querySelector('#adjust-player form input[name="' + parent + '"]');
+                var childElements = child.split(";");
+                var setDisabled = function(disabled) {
+                    for (var i = 0; i < childElements.length; ++i) {
+                        if (disabled) {
+                            document.querySelector('#adjust-player form [name="' + childElements[i] + '"]').setAttribute('disabled', '');
+                        } else {
+                            document.querySelector('#adjust-player form [name="' + childElements[i] + '"]').removeAttribute('disabled');
+                        }
+                    }
+                };
+                disabledEvent = parentElement.checked ? setDisabled(false) : setDisabled(true);
+            } else if (type === "div") {
+                var parentElement = document.querySelector('#adjust-player form input[name="' + parent + '"]');
+                var childElement = document.querySelector('#adjust-player form div.' + child + '');
+                disabledEvent = parentElement.checked ? childElement.classList.remove("disabled") : childElement.classList.add("disabled");
+            }
+        },
+        adjustPlayerSize: function() {
+            //init
+            if (matchURL.isWatchlater() || matchURL.isOldBangumi() || matchURL.isNewBangumi()) {
+                if (window.confirm('调整大小功能不支持在\n【稍后观看页面】，【番剧页面】 中使用。\n点确定会跳转到测试页面，请在测试页面中重新调整\n取消放弃调整')) {
+                    window.top.location = "http://www.bilibili.com/video/av120040/";
+                    return;
+                } else {
+                    return;
+                }
+            }
+            document.querySelector('#adjust-player').setAttribute("style", "display: none;");
+            unsafeWindow.scrollTo(0, 0);
 
-			//tips
-			var tips = document.createElement('div');
-			tips.innerHTML = commentToString(function() {
-				/*
+            //tips
+            var tips = document.createElement('div');
+            tips.innerHTML = commentToString(function() {
+                /*
             <div class="info">
               <p>当前宽度：<span class="width">1024</span> px</p>
               <p>当前高度：<span class="height">576</span> px</p>
@@ -2547,14 +2546,14 @@
               <p style="color: red; font-size: 80px;">↘</p>
             </div>
             */
-			});
-			tips.id = "adjust-player-tips";
-			tips.style = "width: 1024px; height:576px";
+            });
+            tips.id = "adjust-player-tips";
+            tips.style = "width: 1024px; height:576px";
 
-			//save
-			var tipsSave = document.createElement('div');
-			tipsSave.innerHTML = commentToString(function() {
-				/*
+            //save
+            var tipsSave = document.createElement('div');
+            tipsSave.innerHTML = commentToString(function() {
+                /*
             <div class="content">
               <p class="bold">使用帮助</p>
               <p>1.拖动右下角“外框”调整播放器大小（<span style="color: red;">↘</span> 处）。</p>
@@ -2593,119 +2592,119 @@
 			  <div style="clear: both;"></div>
             </div>
             */
-			});
-			tipsSave.id = "adjust-player-tips-save";
-			tipsSave.onclick = function(e) {
-				var resizePlayerWidth = document.querySelector('#adjust-player form input[name="resizePlayerWidth"]');
-				var resizePlayerRatio = document.querySelector('#adjust-player form input[name="resizePlayerRatio"]');
-				var resizePlayerVideoInfoAndUpInfoPosition = document.querySelector('#adjust-player form input[name="resizePlayerVideoInfoAndUpInfoPosition"]');
-				var resizePlayer = document.querySelector('#adjust-player form input[name="resizePlayer"]');
+            });
+            tipsSave.id = "adjust-player-tips-save";
+            tipsSave.onclick = function(e) {
+                var resizePlayerWidth = document.querySelector('#adjust-player form input[name="resizePlayerWidth"]');
+                var resizePlayerRatio = document.querySelector('#adjust-player form input[name="resizePlayerRatio"]');
+                var resizePlayerVideoInfoAndUpInfoPosition = document.querySelector('#adjust-player form input[name="resizePlayerVideoInfoAndUpInfoPosition"]');
+                var resizePlayer = document.querySelector('#adjust-player form input[name="resizePlayer"]');
 
-				var action = e.target.getAttribute('action');
-				if (e.target && action !== null) {
-					var customRatio = document.querySelector('#adjust-player-tips-save select[name="customRatio"]');
-					var customVideoInfoAndUpInfoPosition = document.querySelector('#adjust-player-tips-save select[name="customVideoInfoAndUpInfoPosition"]');
-					if (action === "save") {
-						try {
-							var minWidth = 724;
-							var minHeight = 408;
-							var adjustPlayerTips = document.querySelector('#adjust-player-tips');
-							var width = parseInt(adjustPlayerTips.clientWidth);
-							var height = parseInt(adjustPlayerTips.clientHeight);
+                var action = e.target.getAttribute('action');
+                if (e.target && action !== null) {
+                    var customRatio = document.querySelector('#adjust-player-tips-save select[name="customRatio"]');
+                    var customVideoInfoAndUpInfoPosition = document.querySelector('#adjust-player-tips-save select[name="customVideoInfoAndUpInfoPosition"]');
+                    if (action === "save") {
+                        try {
+                            var minWidth = 724;
+                            var minHeight = 408;
+                            var adjustPlayerTips = document.querySelector('#adjust-player-tips');
+                            var width = parseInt(adjustPlayerTips.clientWidth);
+                            var height = parseInt(adjustPlayerTips.clientHeight);
 
-							if (height <= minHeight) {
-								unsafeWindow.alert('保存设置失败\n播放器高度调整后过小，不能少于408像素，请重新调整！');
-								return;
-							} else {
-								if (width <= minWidth) {
-									width = "724";
-								} else {
-									width = adjustPlayerTips.clientWidth;
-								}
-								resizePlayerWidth.value = width;
-								resizePlayerRatio.value = customRatio.options[customRatio.selectedIndex].value;
-								resizePlayerVideoInfoAndUpInfoPosition.value = customVideoInfoAndUpInfoPosition.options[customVideoInfoAndUpInfoPosition.selectedIndex].value;
-								resizePlayer.checked = true;
-								configWindow.save();
-							}
-						} catch (ex) {
-							unsafeWindow.alert('保存设置失败');
-							location.reload();
-							console.log("adjustPlayer:\n adjustPlayerSize save error\n " + ex);
-						}
-					} else if (action === "cancel") {
-						location.reload();
-					} else if (action === "quickSave") {
-						var customWidth = e.target.getAttribute('customWidth');
-						var height = Number(customWidth / window.adjustPlayerTipsRatio).toFixed();
-						resizePlayerWidth.value = customWidth;
-						resizePlayerRatio.value = customRatio.options[customRatio.selectedIndex].value;
-						resizePlayerVideoInfoAndUpInfoPosition.value = customVideoInfoAndUpInfoPosition.options[customVideoInfoAndUpInfoPosition.selectedIndex].value;
-						resizePlayer.checked = true;
-						configWindow.save();
-					}
-				}
-			};
-			tipsSave.onchange = function(e) {
-				var name = e.target.getAttribute('name');
-				if (e.target && name !== null) {
-					if (name === "customRatio") {
-						var customRatio = e.target.value;
-						var ratio = customRatio.split("/");
-						ratio = ratio[0] / ratio[1];
-						window.adjustPlayerTipsRatio = ratio;
+                            if (height <= minHeight) {
+                                unsafeWindow.alert('保存设置失败\n播放器高度调整后过小，不能少于408像素，请重新调整！');
+                                return;
+                            } else {
+                                if (width <= minWidth) {
+                                    width = "724";
+                                } else {
+                                    width = adjustPlayerTips.clientWidth;
+                                }
+                                resizePlayerWidth.value = width;
+                                resizePlayerRatio.value = customRatio.options[customRatio.selectedIndex].value;
+                                resizePlayerVideoInfoAndUpInfoPosition.value = customVideoInfoAndUpInfoPosition.options[customVideoInfoAndUpInfoPosition.selectedIndex].value;
+                                resizePlayer.checked = true;
+                                configWindow.save();
+                            }
+                        } catch (ex) {
+                            unsafeWindow.alert('保存设置失败');
+                            location.reload();
+                            console.log("adjustPlayer:\n adjustPlayerSize save error\n " + ex);
+                        }
+                    } else if (action === "cancel") {
+                        location.reload();
+                    } else if (action === "quickSave") {
+                        var customWidth = e.target.getAttribute('customWidth');
+                        var height = Number(customWidth / window.adjustPlayerTipsRatio).toFixed();
+                        resizePlayerWidth.value = customWidth;
+                        resizePlayerRatio.value = customRatio.options[customRatio.selectedIndex].value;
+                        resizePlayerVideoInfoAndUpInfoPosition.value = customVideoInfoAndUpInfoPosition.options[customVideoInfoAndUpInfoPosition.selectedIndex].value;
+                        resizePlayer.checked = true;
+                        configWindow.save();
+                    }
+                }
+            };
+            tipsSave.onchange = function(e) {
+                var name = e.target.getAttribute('name');
+                if (e.target && name !== null) {
+                    if (name === "customRatio") {
+                        var customRatio = e.target.value;
+                        var ratio = customRatio.split("/");
+                        ratio = ratio[0] / ratio[1];
+                        window.adjustPlayerTipsRatio = ratio;
 
-						var adjustPlayerTipsRatio = document.querySelector('#adjust-player-tips .info .ratio');
-						adjustPlayerTipsRatio.innerHTML = customRatio;
-					}
-				}
-			};
+                        var adjustPlayerTipsRatio = document.querySelector('#adjust-player-tips .info .ratio');
+                        adjustPlayerTipsRatio.innerHTML = customRatio;
+                    }
+                }
+            };
 
-			//resize
-			var playerContent = document.createElement('div');
-			playerContent.id = 'adjust-Player-Size';
-			playerContent.style = "position: absolute; width: 100%; min-height: 576px; top: 60px; z-index: 999999; height: 100%; margin: 0px auto; background: #fff;";
-			playerContent.insertBefore(tips, playerContent.firstChild);
-			playerContent.insertBefore(tipsSave, playerContent.firstChild);
+            //resize
+            var playerContent = document.createElement('div');
+            playerContent.id = 'adjust-Player-Size';
+            playerContent.style = "position: absolute; width: 100%; min-height: 576px; top: 60px; z-index: 999999; height: 100%; margin: 0px auto; background: #fff;";
+            playerContent.insertBefore(tips, playerContent.firstChild);
+            playerContent.insertBefore(tipsSave, playerContent.firstChild);
 
-			document.body.appendChild(playerContent);
+            document.body.appendChild(playerContent);
 
-			var adjustPlayerTipsSave = document.querySelector('#adjust-player-tips-save');
-			var adjustPlayerTipsSaveContent = document.querySelector('#adjust-player-tips-save .content');
-			adjustPlayerTipsSave.setAttribute("style", "position: absolute; z-index: 100000; left: calc(100% / 2 - calc(" + adjustPlayerTipsSaveContent.clientWidth + "px / 2));");
+            var adjustPlayerTipsSave = document.querySelector('#adjust-player-tips-save');
+            var adjustPlayerTipsSaveContent = document.querySelector('#adjust-player-tips-save .content');
+            adjustPlayerTipsSave.setAttribute("style", "position: absolute; z-index: 100000; left: calc(100% / 2 - calc(" + adjustPlayerTipsSaveContent.clientWidth + "px / 2));");
 
-			//resize event
-			window.adjustPlayerTipsRatio = 16 / 9;
-			var adjustPlayerTips = document.querySelector('#adjust-player-tips');
-			var adjustPlayerTipsW = document.querySelector('#adjust-player-tips .info .width');
-			var adjustPlayerTipsH = document.querySelector('#adjust-player-tips .info .height');
-			var adjustPlayerTipsDragArrow = document.querySelector('#adjust-player-tips .drag-arrow');
+            //resize event
+            window.adjustPlayerTipsRatio = 16 / 9;
+            var adjustPlayerTips = document.querySelector('#adjust-player-tips');
+            var adjustPlayerTipsW = document.querySelector('#adjust-player-tips .info .width');
+            var adjustPlayerTipsH = document.querySelector('#adjust-player-tips .info .height');
+            var adjustPlayerTipsDragArrow = document.querySelector('#adjust-player-tips .drag-arrow');
 
-			var resizeEvent = function callback() {
-				window.setTimeout(callback, 20);
-				var width = adjustPlayerTips.clientWidth;
-				var height = adjustPlayerTips.clientHeight;
-				var newHeight = Number(width / window.adjustPlayerTipsRatio).toFixed();
-				adjustPlayerTips.setAttribute("style", "position: relative; z-index:10000; margin:0 auto; width: " + width + "px; height:" + newHeight + "px; min-width:724px;");
-				adjustPlayerTipsW.innerHTML = width;
-				adjustPlayerTipsH.innerHTML = newHeight;
-				adjustPlayerTipsDragArrow.setAttribute("style", "top:calc(" + height + "px - 80px);right:20px;");
-			};
+            var resizeEvent = function callback() {
+                window.setTimeout(callback, 20);
+                var width = adjustPlayerTips.clientWidth;
+                var height = adjustPlayerTips.clientHeight;
+                var newHeight = Number(width / window.adjustPlayerTipsRatio).toFixed();
+                adjustPlayerTips.setAttribute("style", "position: relative; z-index:10000; margin:0 auto; width: " + width + "px; height:" + newHeight + "px; min-width:724px;");
+                adjustPlayerTipsW.innerHTML = width;
+                adjustPlayerTipsH.innerHTML = newHeight;
+                adjustPlayerTipsDragArrow.setAttribute("style", "top:calc(" + height + "px - 80px);right:20px;");
+            };
 
-			window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+            window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
 
-			var resizeEventID;
-			resizeEventID = window.requestAnimationFrame(resizeEvent);
+            var resizeEventID;
+            resizeEventID = window.requestAnimationFrame(resizeEvent);
 
-			//window.cancelAnimationFrame(resizeEventID);
-		},
-		shortcutsWindow: function(e) {
-			//create
-			var name = 'shortcutsSetting';
-			var title = '快捷键设置';
-			var bar = '<span class="btn" action="cancel">X</span>';
-			var content = commentToString(function() {
-				/*
+            //window.cancelAnimationFrame(resizeEventID);
+        },
+        shortcutsWindow: function(e) {
+            //create
+            var name = 'shortcutsSetting';
+            var title = '快捷键设置';
+            var bar = '<span class="btn" action="cancel">X</span>';
+            var content = commentToString(function() {
+                /*
 			<p style="margin-bottom: 4px;font-size: 16px;">请在输入框内按下需要的按键设置快捷键：<span id="tips" style="text-align: left; color: #ff81aa; margin-top: 33px; right: 32px; position: absolute;"></span></p>
 			<p>
 			  <input type="text" name="keyName" placeholder="支持单个组合键ctrl，alt，shift" style="width: 574px;height:30px;font-size: 16px;text-align: center;padding:4px 0;border: 1px solid #ccd0d7;border-radius: 4px;" >
@@ -2723,129 +2722,129 @@
                <div class="btn btn-cancel" action="cancel">取消</div>
 			</div>
 			*/
-			});
-			var isModal = e.target.offsetParent.offsetParent;
-			dialog.create(name, title, bar, content, isModal);
+            });
+            var isModal = e.target.offsetParent.offsetParent;
+            dialog.create(name, title, bar, content, isModal);
 
-			//onkeydown
-			var tips = document.querySelector('#shortcutsSetting #tips');
-			var kName = document.querySelector('#shortcutsSetting input[name="keyName"]');
-			var kCode = document.querySelector('#shortcutsSetting input[name="keyCode"]');
-			var typeName = document.querySelector('#shortcutsSetting input[name="typeName"]');
-			typeName.value = e.target.getAttribute('typeName');
+            //onkeydown
+            var tips = document.querySelector('#shortcutsSetting #tips');
+            var kName = document.querySelector('#shortcutsSetting input[name="keyName"]');
+            var kCode = document.querySelector('#shortcutsSetting input[name="keyCode"]');
+            var typeName = document.querySelector('#shortcutsSetting input[name="typeName"]');
+            typeName.value = e.target.getAttribute('typeName');
 
-			function keydownEvent(event) {
-				if (!event.metaKey) {
-					event.preventDefault();
-				}
-				tips.innerHTML = "";
-				var keyCode = getkeyCode(event.keyCode);
-				if (typeof keyCode !== 'undefined') {
-					if (event.altKey && event.shiftKey || event.ctrlKey && event.shiftKey || event.ctrlKey && event.altKey) {
-						return;
-					}
-					if (event.shiftKey && event.keyCode !== 16) {
-						kName.value = "shift + " + keyCode;
-						kCode.value = "shift" + '+' + event.keyCode;
-					} else if (event.ctrlKey && event.keyCode !== 17) {
-						kName.value = "ctrl + " + keyCode;
-						kCode.value = "ctrl" + '+' + event.keyCode;
-					} else if (event.altKey && event.keyCode !== 18) {
-						kName.value = "alt + " + keyCode;
-						kCode.value = "alt" + '+' + event.keyCode;
-					} else {
-						kName.value = keyCode;
-						kCode.value = event.keyCode;
-					}
-				} else {
-					tips.innerHTML = "按键无法被识别";
-				}
-			}
-			kName.addEventListener("keydown", keydownEvent, false);
+            function keydownEvent(event) {
+                if (!event.metaKey) {
+                    event.preventDefault();
+                }
+                tips.innerHTML = "";
+                var keyCode = getkeyCode(event.keyCode);
+                if (typeof keyCode !== 'undefined') {
+                    if (event.altKey && event.shiftKey || event.ctrlKey && event.shiftKey || event.ctrlKey && event.altKey) {
+                        return;
+                    }
+                    if (event.shiftKey && event.keyCode !== 16) {
+                        kName.value = "shift + " + keyCode;
+                        kCode.value = "shift" + '+' + event.keyCode;
+                    } else if (event.ctrlKey && event.keyCode !== 17) {
+                        kName.value = "ctrl + " + keyCode;
+                        kCode.value = "ctrl" + '+' + event.keyCode;
+                    } else if (event.altKey && event.keyCode !== 18) {
+                        kName.value = "alt + " + keyCode;
+                        kCode.value = "alt" + '+' + event.keyCode;
+                    } else {
+                        kName.value = keyCode;
+                        kCode.value = event.keyCode;
+                    }
+                } else {
+                    tips.innerHTML = "按键无法被识别";
+                }
+            }
+            kName.addEventListener("keydown", keydownEvent, false);
 
-			//inputFocus
-			function focusEvent(event) {
-				document.removeEventListener("keydown", focusEvent, false);
-				kName.focus();
-				keydownEvent(event);
-			}
-			document.addEventListener("keydown", focusEvent, false);
-			//console.log(e);
-		},
-		shortcutsSettingClear: function() {
-			var typeName = document.querySelector('#shortcutsSetting input[name="typeName"]');
-			var keyName = document.querySelector('#adjust-player #main form .shortcutsGroup input[name="' + typeName.value + 'KeyName"]');
-			var keyCode = document.querySelector('#adjust-player #main form .shortcutsGroup input[name="' + typeName.value + 'KeyCode"]');
-			var type = document.querySelector('#adjust-player #main form .shortcutsGroup input[name="' + typeName.value + '"]');
-			keyName.value = "";
-			keyCode.value = "";
-			type.checked = false;
-			dialog.close(document.querySelector('#adjust-player > #shortcutsSetting'));
-		},
-		shortcutsSettingSave: function() {
-			try {
-				var tips = document.querySelector('#shortcutsSetting #tips');
-				var kName = document.querySelector('#shortcutsSetting input[name="keyName"]');
-				var kCode = document.querySelector('#shortcutsSetting input[name="keyCode"]');
-				var typeName = document.querySelector('#shortcutsSetting input[name="typeName"]');
-				var typeNameValue = document.querySelector('#adjust-player #main form .shortcutsGroup input[name="' + typeName.value + 'KeyCode"]');
+            //inputFocus
+            function focusEvent(event) {
+                document.removeEventListener("keydown", focusEvent, false);
+                kName.focus();
+                keydownEvent(event);
+            }
+            document.addEventListener("keydown", focusEvent, false);
+            //console.log(e);
+        },
+        shortcutsSettingClear: function() {
+            var typeName = document.querySelector('#shortcutsSetting input[name="typeName"]');
+            var keyName = document.querySelector('#adjust-player #main form .shortcutsGroup input[name="' + typeName.value + 'KeyName"]');
+            var keyCode = document.querySelector('#adjust-player #main form .shortcutsGroup input[name="' + typeName.value + 'KeyCode"]');
+            var type = document.querySelector('#adjust-player #main form .shortcutsGroup input[name="' + typeName.value + '"]');
+            keyName.value = "";
+            keyCode.value = "";
+            type.checked = false;
+            dialog.close(document.querySelector('#adjust-player > #shortcutsSetting'));
+        },
+        shortcutsSettingSave: function() {
+            try {
+                var tips = document.querySelector('#shortcutsSetting #tips');
+                var kName = document.querySelector('#shortcutsSetting input[name="keyName"]');
+                var kCode = document.querySelector('#shortcutsSetting input[name="keyCode"]');
+                var typeName = document.querySelector('#shortcutsSetting input[name="typeName"]');
+                var typeNameValue = document.querySelector('#adjust-player #main form .shortcutsGroup input[name="' + typeName.value + 'KeyCode"]');
 
-				if (kName.value !== "" && kCode.value !== "" && typeName.value !== "") {
-					var keyCodes = document.querySelectorAll('#adjust-player #main form .shortcutsGroup input[KeyCode="true"]'),
-						i;
-					var isUsedkeyCode = false;
-					for (i = 0; i < keyCodes.length; ++i) {
-						if (kCode.value === keyCodes[i].value && kCode.value !== typeNameValue.value) {
-							isUsedkeyCode = true;
-							break;
-						}
-					}
+                if (kName.value !== "" && kCode.value !== "" && typeName.value !== "") {
+                    var keyCodes = document.querySelectorAll('#adjust-player #main form .shortcutsGroup input[KeyCode="true"]'),
+                        i;
+                    var isUsedkeyCode = false;
+                    for (i = 0; i < keyCodes.length; ++i) {
+                        if (kCode.value === keyCodes[i].value && kCode.value !== typeNameValue.value) {
+                            isUsedkeyCode = true;
+                            break;
+                        }
+                    }
 
-					if (isUsedkeyCode) {
-						tips.innerHTML = "按键冲突，已使用过的快捷键";
-						kName.focus();
-					} else if (kCode.value === "16" || kCode.value === "17" || kCode.value === "18") {
-						tips.innerHTML = "按键不能为单个的 ctrl，alt，shift";
-						kName.focus();
-					} else {
-						var shortcutsKeyName = document.querySelector('#adjust-player .shortcutsGroup input[name="' + typeName.value + 'KeyName"]');
-						var shortcutsKeyCode = document.querySelector('#adjust-player .shortcutsGroup input[name="' + typeName.value + 'KeyCode"]');
-						var shortcutsTypeName = document.querySelector('#adjust-player .shortcutsGroup input[name="' + typeName.value + '"]');
+                    if (isUsedkeyCode) {
+                        tips.innerHTML = "按键冲突，已使用过的快捷键";
+                        kName.focus();
+                    } else if (kCode.value === "16" || kCode.value === "17" || kCode.value === "18") {
+                        tips.innerHTML = "按键不能为单个的 ctrl，alt，shift";
+                        kName.focus();
+                    } else {
+                        var shortcutsKeyName = document.querySelector('#adjust-player .shortcutsGroup input[name="' + typeName.value + 'KeyName"]');
+                        var shortcutsKeyCode = document.querySelector('#adjust-player .shortcutsGroup input[name="' + typeName.value + 'KeyCode"]');
+                        var shortcutsTypeName = document.querySelector('#adjust-player .shortcutsGroup input[name="' + typeName.value + '"]');
 
-						shortcutsKeyName.value = kName.value;
-						shortcutsKeyCode.value = kCode.value;
-						shortcutsTypeName.checked = true;
+                        shortcutsKeyName.value = kName.value;
+                        shortcutsKeyCode.value = kCode.value;
+                        shortcutsTypeName.checked = true;
 
-						dialog.close(document.querySelector('#adjust-player > #shortcutsSetting'));
-					}
+                        dialog.close(document.querySelector('#adjust-player > #shortcutsSetting'));
+                    }
 
-				} else {
-					tips.innerHTML = "按键不能为空";
-					kName.focus();
-				}
-			} catch (ex) {
-				unsafeWindow.alert('设置失败');
-				console.log("shortcutsSettingSave\n " + ex);
-			}
-		},
-		shortcutsSettingCancel: function() {
-			var typeName = document.querySelector('#shortcutsSetting input[name="typeName"]');
-			var keyCode = document.querySelector('#adjust-player #main form .shortcutsGroup input[name="' + typeName.value + 'KeyCode"]');
-			var type = document.querySelector('#adjust-player #main form .shortcutsGroup input[name="' + typeName.value + '"]');
-			if (keyCode.value !== "") {
-				type.checked = true;
-			} else {
-				type.checked = false;
-			}
+                } else {
+                    tips.innerHTML = "按键不能为空";
+                    kName.focus();
+                }
+            } catch (ex) {
+                unsafeWindow.alert('设置失败');
+                console.log("shortcutsSettingSave\n " + ex);
+            }
+        },
+        shortcutsSettingCancel: function() {
+            var typeName = document.querySelector('#shortcutsSetting input[name="typeName"]');
+            var keyCode = document.querySelector('#adjust-player #main form .shortcutsGroup input[name="' + typeName.value + 'KeyCode"]');
+            var type = document.querySelector('#adjust-player #main form .shortcutsGroup input[name="' + typeName.value + '"]');
+            if (keyCode.value !== "") {
+                type.checked = true;
+            } else {
+                type.checked = false;
+            }
 
-			dialog.close(document.querySelector('#adjust-player > #shortcutsSetting'));
-		},
-		storageTypeWindow: function(e) {
-			var name = 'storageType';
-			var title = '更改脚本数据存储类型';
-			var bar = '<span class="btn" action="close">X</span>';
-			var content = commentToString(function() {
-				/*
+            dialog.close(document.querySelector('#adjust-player > #shortcutsSetting'));
+        },
+        storageTypeWindow: function(e) {
+            var name = 'storageType';
+            var title = '更改脚本数据存储类型';
+            var bar = '<span class="btn" action="close">X</span>';
+            var content = commentToString(function() {
+                /*
 			<p style="margin-bottom: 4px;font-size: 16px;">请选择脚本数据存储类型：<span id="tips" style="text-align: left; color: #ff81aa; margin-top: 33px; right: 22px; position: absolute;"></span></p>
 			<p style="margin: 10px;font-size: 16px; text-align:center;">
 			   <input type="radio" id="extension" name="storageType" value="extension" checked>
@@ -2866,50 +2865,50 @@
                <div class="btn btn-cancel" action="cancel">取消</div>
 			</div>
 			*/
-			});
-			var isModal = e.target.parentNode.parentNode.offsetParent;
-			dialog.create(name, title, bar, content, isModal);
+            });
+            var isModal = e.target.parentNode.parentNode.offsetParent;
+            dialog.create(name, title, bar, content, isModal);
 
-			var setStorageTypeValue = localStorage.getItem('adjustPlayer_storageType');
-			if (setStorageTypeValue !== null) {
-				var storageType = document.querySelectorAll('#storageType input[name="storageType"]'),
-					i;
-				for (i = 0; i < storageType.length; ++i) {
-					if (storageType[i].value === setStorageTypeValue) {
-						storageType[i].checked = true;
-						break;
-					}
-				}
-			}
-		},
-		storageTypeSave: function() {
-			var setStorageTypeValue = null;
-			var storageType = document.querySelectorAll('#storageType input[name="storageType"]'),
-				i;
-			for (i = 0; i < storageType.length; ++i) {
-				if (storageType[i].checked === true) {
-					setStorageTypeValue = storageType[i].value;
-					break;
-				}
-			}
-			if (setStorageTypeValue !== null) {
-				localStorage.setItem('adjustPlayer_storageType', setStorageTypeValue);
-				var getStorageType = localStorage.getItem('adjustPlayer_storageType');
-				if (getStorageType === setStorageTypeValue) {
-					alert("更改设置成功");
-					location.reload();
-				} else {
-					alert("更改设置失败");
-					location.reload();
-				}
-			}
-		},
-		help: function() {
-			var name = 'help';
-			var title = '哔哩哔哩播放器调整';
-			var bar = '<span class="btn" action="close">X</span>';
-			var content = commentToString(function() {
-				/*
+            var setStorageTypeValue = localStorage.getItem('adjustPlayer_storageType');
+            if (setStorageTypeValue !== null) {
+                var storageType = document.querySelectorAll('#storageType input[name="storageType"]'),
+                    i;
+                for (i = 0; i < storageType.length; ++i) {
+                    if (storageType[i].value === setStorageTypeValue) {
+                        storageType[i].checked = true;
+                        break;
+                    }
+                }
+            }
+        },
+        storageTypeSave: function() {
+            var setStorageTypeValue = null;
+            var storageType = document.querySelectorAll('#storageType input[name="storageType"]'),
+                i;
+            for (i = 0; i < storageType.length; ++i) {
+                if (storageType[i].checked === true) {
+                    setStorageTypeValue = storageType[i].value;
+                    break;
+                }
+            }
+            if (setStorageTypeValue !== null) {
+                localStorage.setItem('adjustPlayer_storageType', setStorageTypeValue);
+                var getStorageType = localStorage.getItem('adjustPlayer_storageType');
+                if (getStorageType === setStorageTypeValue) {
+                    alert("更改设置成功");
+                    location.reload();
+                } else {
+                    alert("更改设置失败");
+                    location.reload();
+                }
+            }
+        },
+        help: function() {
+            var name = 'help';
+            var title = '哔哩哔哩播放器调整';
+            var bar = '<span class="btn" action="close">X</span>';
+            var content = commentToString(function() {
+                /*
 			<h2 style="font-weight: bold;font-size: 16px;">小提示：</h2>
 			<ol style="padding: 0 0 0 20px;margin:10px 0;">
 			   <li style="list-style: disc;">播放器调整设置按钮在<span style="font-weight: bold;">页面最右侧。</span></li>
@@ -2917,12 +2916,12 @@
 			</ol>
 			<div class="btns" style="text-align: center;"><div class="btn" action="close">关闭</div></div>
 			*/
-			});
+            });
 
-			var player = isPlayer();
-			if (player === "flashPlayer") {
-				content = commentToString(function() {
-					/*
+            var player = isPlayer();
+            if (player === "flashPlayer") {
+                content = commentToString(function() {
+                    /*
 				<h2 style="font-weight: bold;font-size: 16px;">小提示：</h2>
 				<ol style="padding: 0 0 0 20px;margin:10px 0;">
 				   <li style="list-style: disc;"><span style="font-weight: bold;">此脚本现已不再支持 flash 播放器</span></li>
@@ -2935,30 +2934,30 @@
 				</ol>
 				<div class="btns" style="text-align: center;"><div class="btn" action="close">关闭</div></div>
 				*/
-				});
-			}
-			dialog.create(name, title, bar, content);
-		},
+                });
+            }
+            dialog.create(name, title, bar, content);
+        },
 
-		init: function() {
-			configWindow.create();
-			if (typeof GM_getValue === 'function') {
-				var formData = config.read();
-				configWindow.load(formData);
-			} else {
-				var formData = config.read();
-				formData.then(function(value) {
-					configWindow.load(value);
-				});
-			}
-		}
-	};
+        init: function() {
+            configWindow.create();
+            if (typeof GM_getValue === 'function') {
+                var formData = config.read();
+                configWindow.load(formData);
+            } else {
+                var formData = config.read();
+                formData.then(function(value) {
+                    configWindow.load(value);
+                });
+            }
+        }
+    };
 
-	function createConfigBtn() {
-		var isExistAdjustPlayerMain = document.querySelector('#adjust-player');
-		if (isExistAdjustPlayerMain === null) { //isExistAdjustPlayerMain === null
-			var css = commentToString(function() {
-				/*
+    function createConfigBtn() {
+        var isExistAdjustPlayerMain = document.querySelector('#adjust-player');
+        if (isExistAdjustPlayerMain === null) { //isExistAdjustPlayerMain === null
+            var css = commentToString(function() {
+                /*
 				#adjust-player-config-btn{position:fixed;bottom:243px;right:6px;z-index:10;}
 				#adjust-player-config-btn span{font-size:12px;display:block;padding:6px 0;text-align:center;line-height:17px;background:#fff;border:1px solid #e7e7e7;-webkit-box-shadow:0 6px 10px 0 hsla(0,0%,73%,.3);box-shadow:0 6px 10px 0 hsla(0,0%,73%,.3);border-radius:2px;color:#212121;width:46px;cursor:pointer;transition:color .3s}
 				#adjust-player-config-btn span:hover {color: #00a1d6;border: 1px solid #00a1d6}
@@ -3022,480 +3021,480 @@
 				#adjust-player-tips .tips-text{position:absolute;bottom:10px;margin-left:10px;color:#99a2aa}
 				#adjust-player-tips .drag-arrow{position:absolute;right:0}
 			*/
-			});
-			var styleNode = document.createElement('style');
-			styleNode.type = 'text/css';
-			styleNode.id = 'adjustPlayerMainCss';
-			styleNode.appendChild(document.createTextNode(css));
-			document.documentElement.appendChild(styleNode);
-			var adjustPlayer = document.createElement('div');
-			adjustPlayer.id = 'adjust-player';
-			document.body.appendChild(adjustPlayer);
-			var adjustPlayerMask = document.createElement('div');
-			adjustPlayerMask.className = 'adjust-player-mask';
-			document.querySelector('#adjust-player').appendChild(adjustPlayerMask);
-		}
-		var isExistConfigBtn = document.querySelector('#adjust-player-config-btn');
-		if (isExistConfigBtn === null) {
-			var configButton = document.createElement('div');
-			configButton.id = 'adjust-player-config-btn';
-			configButton.innerHTML = '<span>播放器<br>调整</span>';
-			configButton.onclick = function() {
-				configWindow.init();
-			};
-			document.querySelector('body').appendChild(configButton);
-			// document.querySelector('.float-nav').style.bottom = "70px"
-		}
-	}
-	var matchURL = {
-		isVideoAV: function() {
-			if (location.href.match(/video\/av\d*/g) !== null) {
-				return true;
-			} else {
-				return false;
-			}
-		},
-		isOldBangumi: function() {
-			if (location.hostname === 'bangumi.bilibili.com') {
-				return true;
-			} else {
-				return false;
-			}
-		},
-		isWatchlater: function() {
-			if (location.href.match(/watchlater\/#\/av\d*\/p\d*/g) !== null) {
-				return true;
-			} else {
-				return false;
-			}
-		},
-		isBangumiMovie: function() {
-			if (location.href.match(/bangumi.bilibili.com\/movie\/\d*/g) !== null) {
-				return true;
-			} else {
-				return false;
-			}
-		},
-		isNewBangumi: function() {
-			if (location.href.match(/bangumi\/play\/(ep|ss)\d*/g) !== null) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-	};
+            });
+            var styleNode = document.createElement('style');
+            styleNode.type = 'text/css';
+            styleNode.id = 'adjustPlayerMainCss';
+            styleNode.appendChild(document.createTextNode(css));
+            document.documentElement.appendChild(styleNode);
+            var adjustPlayer = document.createElement('div');
+            adjustPlayer.id = 'adjust-player';
+            document.body.appendChild(adjustPlayer);
+            var adjustPlayerMask = document.createElement('div');
+            adjustPlayerMask.className = 'adjust-player-mask';
+            document.querySelector('#adjust-player').appendChild(adjustPlayerMask);
+        }
+        var isExistConfigBtn = document.querySelector('#adjust-player-config-btn');
+        if (isExistConfigBtn === null) {
+            var configButton = document.createElement('div');
+            configButton.id = 'adjust-player-config-btn';
+            configButton.innerHTML = '<span>播放器<br>调整</span>';
+            configButton.onclick = function() {
+                configWindow.init();
+            };
+            document.querySelector('body').appendChild(configButton);
+            // document.querySelector('.float-nav').style.bottom = "70px"
+        }
+    }
+    var matchURL = {
+        isVideoAV: function() {
+            if (location.href.match(/video\/av\d*/g) !== null) {
+                return true;
+            } else {
+                return false;
+            }
+        },
+        isOldBangumi: function() {
+            if (location.hostname === 'bangumi.bilibili.com') {
+                return true;
+            } else {
+                return false;
+            }
+        },
+        isWatchlater: function() {
+            if (location.href.match(/watchlater\/#\/av\d*\/p\d*/g) !== null) {
+                return true;
+            } else {
+                return false;
+            }
+        },
+        isBangumiMovie: function() {
+            if (location.href.match(/bangumi.bilibili.com\/movie\/\d*/g) !== null) {
+                return true;
+            } else {
+                return false;
+            }
+        },
+        isNewBangumi: function() {
+            if (location.href.match(/bangumi\/play\/(ep|ss)\d*/g) !== null) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    };
 
-	function querySelectorFromIframe(obj) {
-		var iframePlayer = document.querySelector('iframe.bilibiliHtml5Player');
-		if (matchURL.isOldBangumi() || matchURL.isNewBangumi()) {
-			if (iframePlayer !== null) {
-				return iframePlayer.contentWindow.document.body.querySelector(obj);
-			} else {
-				return document.querySelector(obj);
-			}
-		} else {
-			return document.querySelector(obj);
-		}
-	}
+    function querySelectorFromIframe(obj) {
+        var iframePlayer = document.querySelector('iframe.bilibiliHtml5Player');
+        if (matchURL.isOldBangumi() || matchURL.isNewBangumi()) {
+            if (iframePlayer !== null) {
+                return iframePlayer.contentWindow.document.body.querySelector(obj);
+            } else {
+                return document.querySelector(obj);
+            }
+        } else {
+            return document.querySelector(obj);
+        }
+    }
 
-	function isPlayer() {
-		var flashPlayer = querySelectorFromIframe('#bofqi object');
-		var html5Player = querySelectorFromIframe('.bilibili-player-video video');
-		if (flashPlayer !== null) {
-			return "flashPlayer";
-		} else if (html5Player !== null) {
-			return "html5Player";
-		} else {
-			return "unknownPlayer";
-		}
-	}
+    function isPlayer() {
+        var flashPlayer = querySelectorFromIframe('#bofqi object');
+        var html5Player = querySelectorFromIframe('.bilibili-player-video video');
+        if (flashPlayer !== null) {
+            return "flashPlayer";
+        } else if (html5Player !== null) {
+            return "html5Player";
+        } else {
+            return "unknownPlayer";
+        }
+    }
 
-	function isFullscreen() {
-		var element = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
-		if (typeof element === 'undefined') {
-			return false;
-		} else {
-			return true;
-		}
-	}
+    function isFullscreen() {
+        var element = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+        if (typeof element === 'undefined') {
+            return false;
+        } else {
+            return true;
+        }
+    }
 
-	function createMouseoverAndMouseoutEvent(type, element) {
-		if (typeof type !== 'undefined' && typeof element !== 'undefined') {
-			return new Promise(function(resolve, reject) {
-				var createEvent = function(type) {
-					var evt = document.createEvent('Event');
-					if (type === "show") {
-						evt.initEvent('mouseover', true, true);
-						element.dispatchEvent(evt);
-					} else if (type === "hide") {
-						evt.initEvent('mouseout', true, true);
-						element.dispatchEvent(evt);
-					}
-				};
-				createEvent(type);
-				resolve(type);
-			});
-		}
-	}
+    function createMouseoverAndMouseoutEvent(type, element) {
+        if (typeof type !== 'undefined' && typeof element !== 'undefined') {
+            return new Promise(function(resolve, reject) {
+                var createEvent = function(type) {
+                    var evt = document.createEvent('Event');
+                    if (type === "show") {
+                        evt.initEvent('mouseover', true, true);
+                        element.dispatchEvent(evt);
+                    } else if (type === "hide") {
+                        evt.initEvent('mouseout', true, true);
+                        element.dispatchEvent(evt);
+                    }
+                };
+                createEvent(type);
+                resolve(type);
+            });
+        }
+    }
 
-	function doClick(obj) {
-		if (obj !== null) {
-			if (obj.click) {
-				obj.click();
-			} else {
-				var evt = document.createEvent('Event');
-				evt.initEvent('click', true, true);
-				obj.dispatchEvent(evt);
-			}
-		}
-	}
+    function doClick(obj) {
+        if (obj !== null) {
+            if (obj.click) {
+                obj.click();
+            } else {
+                var evt = document.createEvent('Event');
+                evt.initEvent('click', true, true);
+                obj.dispatchEvent(evt);
+            }
+        }
+    }
 
-	function contextMenuClick(element) {
-		var ev;
-		if (document.createEvent) {
-			/*
-			console.log(element);
-			var clientX = element.offsetLeft;
-			var clientY = element.offsetTop + element.offsetHeight;
-			*/
-			ev = new MouseEvent("contextmenu", {
-				screenX: 10,
-				screenY: 10,
-				clientX: 10,
-				clientY: 10,
-				button: 2
-			});
-			element.dispatchEvent(ev);
-		} else {
-			ev = document.createEventObject();
-			ev.screenX = 10;
-			ev.screenY = 10;
-			ev.clientX = 10;
-			ev.clientY = 10;
-			ev.button = 2;
-			document.fireEvent('contextmenu', ev);
-		}
-	};
+    function contextMenuClick(element) {
+        var ev;
+        if (document.createEvent) {
+            /*
+            console.log(element);
+            var clientX = element.offsetLeft;
+            var clientY = element.offsetTop + element.offsetHeight;
+            */
+            ev = new MouseEvent("contextmenu", {
+                screenX: 10,
+                screenY: 10,
+                clientX: 10,
+                clientY: 10,
+                button: 2
+            });
+            element.dispatchEvent(ev);
+        } else {
+            ev = document.createEventObject();
+            ev.screenX = 10;
+            ev.screenY = 10;
+            ev.clientX = 10;
+            ev.clientY = 10;
+            ev.button = 2;
+            document.fireEvent('contextmenu', ev);
+        }
+    };
 
-	function commentToString(f) {
-		var s = f.toString().replace(/^[\s\S]*\/\*.*/, '').replace(/.*\*\/[\s\S]*$/, '').replace(/\r\n|\r|\n/g, '\n');
-		return s;
-	}
+    function commentToString(f) {
+        var s = f.toString().replace(/^[\s\S]*\/\*.*/, '').replace(/.*\*\/[\s\S]*$/, '').replace(/\r\n|\r|\n/g, '\n');
+        return s;
+    }
 
-	function serialize(e) {
-		if (e && "FORM" === e.nodeName) {
-			var t, s, n, l = {},
-				a = [];
-			var list = {};
-			for (t = e.elements.length - 1; t >= 0; t -= 1) {
-				if ("" !== e.elements[t].name) {
-					var listName = e.elements[t].getAttribute("list");
-					switch (e.elements[t].nodeName) {
-						case "INPUT":
-							switch (e.elements[t].type) {
-								case "hidden":
-								case "text":
-								case "password":
-								case "number":
-									if (listName !== null) {
-										if (typeof e.elements[t].name !== "undefined" && e.elements[t].value !== "") {
-											list[e.elements[t].name] = e.elements[t].value
-										}
-										break
-									}
-									l[e.elements[t].name] = e.elements[t].value;
-									break;
-								case "checkbox":
-								case "radio":
-									if (listName !== null) {
-										if (typeof e.elements[t].name !== "undefined" && e.elements[t].value !== "") {
-											e.elements[t].checked && (n = "on" === e.elements[t].value ? n = !0 : field.value, list[e.elements[t].name] = n);
-											l[listName] = list
-										}
-										break
-									}
-									e.elements[t].checked && (n = "on" === e.elements[t].value ? n = !0 : field.value, l[e.elements[t].name] = n)
-							}
-							break;
-						case "TEXTAREA":
-							if (listName !== null) {
-								if (typeof e.elements[t].name !== "undefined" && e.elements[t].value !== "") {
-									list[e.elements[t].name] = e.elements[t].value
-								}
-								break
-							}
-							l[e.elements[t].name] = e.elements[t].value;
-							break;
-						case "SELECT":
-							switch (e.elements[t].type) {
-								case "select-one":
-									if (listName !== null) {
-										if (typeof e.elements[t].name !== "undefined" && e.elements[t].value !== "") {
-											list[e.elements[t].name] = e.elements[t].value
-										}
-										break
-									}
-									l[e.elements[t].name] = e.elements[t].value;
-									break;
-								case "select-multiple":
-									if (listName !== null) {
-										if (typeof e.elements[t].name !== "undefined" && e.elements[t].value !== "") {
-											for (s = e.elements[t].options.length - 1; s >= 0; s -= 1) {
-												e.elements[t].options[s].selected && a.push(e.elements[t].options[s].value)
-											}
-											list[e.elements[t].name] = a.join()
-										}
-										break
-									}
-									for (s = e.elements[t].options.length - 1; s >= 0; s -= 1) {
-										e.elements[t].options[s].selected && a.push(e.elements[t].options[s].value)
-									}
-									l[e.elements[t].name] = a.join()
-							}
-					}
-				}
-			}
-			return JSON.parse(JSON.stringify(l))
-		}
-	};
+    function serialize(e) {
+        if (e && "FORM" === e.nodeName) {
+            var t, s, n, l = {},
+                a = [];
+            var list = {};
+            for (t = e.elements.length - 1; t >= 0; t -= 1) {
+                if ("" !== e.elements[t].name) {
+                    var listName = e.elements[t].getAttribute("list");
+                    switch (e.elements[t].nodeName) {
+                        case "INPUT":
+                            switch (e.elements[t].type) {
+                                case "hidden":
+                                case "text":
+                                case "password":
+                                case "number":
+                                    if (listName !== null) {
+                                        if (typeof e.elements[t].name !== "undefined" && e.elements[t].value !== "") {
+                                            list[e.elements[t].name] = e.elements[t].value
+                                        }
+                                        break
+                                    }
+                                    l[e.elements[t].name] = e.elements[t].value;
+                                    break;
+                                case "checkbox":
+                                case "radio":
+                                    if (listName !== null) {
+                                        if (typeof e.elements[t].name !== "undefined" && e.elements[t].value !== "") {
+                                            e.elements[t].checked && (n = "on" === e.elements[t].value ? n = !0 : field.value, list[e.elements[t].name] = n);
+                                            l[listName] = list
+                                        }
+                                        break
+                                    }
+                                    e.elements[t].checked && (n = "on" === e.elements[t].value ? n = !0 : field.value, l[e.elements[t].name] = n)
+                            }
+                            break;
+                        case "TEXTAREA":
+                            if (listName !== null) {
+                                if (typeof e.elements[t].name !== "undefined" && e.elements[t].value !== "") {
+                                    list[e.elements[t].name] = e.elements[t].value
+                                }
+                                break
+                            }
+                            l[e.elements[t].name] = e.elements[t].value;
+                            break;
+                        case "SELECT":
+                            switch (e.elements[t].type) {
+                                case "select-one":
+                                    if (listName !== null) {
+                                        if (typeof e.elements[t].name !== "undefined" && e.elements[t].value !== "") {
+                                            list[e.elements[t].name] = e.elements[t].value
+                                        }
+                                        break
+                                    }
+                                    l[e.elements[t].name] = e.elements[t].value;
+                                    break;
+                                case "select-multiple":
+                                    if (listName !== null) {
+                                        if (typeof e.elements[t].name !== "undefined" && e.elements[t].value !== "") {
+                                            for (s = e.elements[t].options.length - 1; s >= 0; s -= 1) {
+                                                e.elements[t].options[s].selected && a.push(e.elements[t].options[s].value)
+                                            }
+                                            list[e.elements[t].name] = a.join()
+                                        }
+                                        break
+                                    }
+                                    for (s = e.elements[t].options.length - 1; s >= 0; s -= 1) {
+                                        e.elements[t].options[s].selected && a.push(e.elements[t].options[s].value)
+                                    }
+                                    l[e.elements[t].name] = a.join()
+                            }
+                    }
+                }
+            }
+            return JSON.parse(JSON.stringify(l))
+        }
+    };
 
-	function deserialize(e, t) {
-		if (e && "FORM" === e.nodeName) {
-			var s, n, l, a, c, m = [];
-			var isList;
-			for (l in t) {
-				for (s = e.elements.length - 1; s >= 0; s -= 1) {
-					if (e.elements[s].name === l || e.elements[s].getAttribute("list") === l) {
-						if ("" === e.elements[s].name) {
-							continue
-						}
-						if (l === e.elements[s].getAttribute("list")) {
-							var list = t[l][e.elements[s].name];
-							if (typeof list !== "undefined") {
-								isList = t[l][e.elements[s].name]
-							} else {
-								isList = ""
-							}
-						} else {
-							isList = t[l]
-						}
-						switch (e.elements[s].nodeName) {
-							case "INPUT":
-								switch (e.elements[s].type) {
-									case "hidden":
-									case "text":
-									case "password":
-									case "number":
-										e.elements[s].setAttribute("value", isList);
-										break;
-									case "checkbox":
-									case "radio":
-										!0 === isList && e.elements[s].setAttribute("checked", "true")
-								}
-								break;
-							case "TEXTAREA":
-								e.elements[s].setAttribute("value", isList);
-								break;
-							case "SELECT":
-								switch (e.elements[s].type) {
-									case "select-one":
-										for (n = e.elements[s].options.length - 1; n >= 0; n -= 1) {
-											c = e.elements[s].options[n], c.value === isList.toString() && c.setAttribute("selected", "true")
-										}
-										break;
-									case "select-multiple":
-										for (m = t[l].split(","), a = m.length - 1; a >= 0; a -= 1) {
-											for (n = e.elements[s].options.length - 1; n >= 0; n -= 1) {
-												c = e.elements[s].options[n], c.value === isList[m[a]].toString() && c.setAttribute("selected", "true")
-											}
-										}
-								}
-						}
-					}
-				}
-			}
-		}
-	};
+    function deserialize(e, t) {
+        if (e && "FORM" === e.nodeName) {
+            var s, n, l, a, c, m = [];
+            var isList;
+            for (l in t) {
+                for (s = e.elements.length - 1; s >= 0; s -= 1) {
+                    if (e.elements[s].name === l || e.elements[s].getAttribute("list") === l) {
+                        if ("" === e.elements[s].name) {
+                            continue
+                        }
+                        if (l === e.elements[s].getAttribute("list")) {
+                            var list = t[l][e.elements[s].name];
+                            if (typeof list !== "undefined") {
+                                isList = t[l][e.elements[s].name]
+                            } else {
+                                isList = ""
+                            }
+                        } else {
+                            isList = t[l]
+                        }
+                        switch (e.elements[s].nodeName) {
+                            case "INPUT":
+                                switch (e.elements[s].type) {
+                                    case "hidden":
+                                    case "text":
+                                    case "password":
+                                    case "number":
+                                        e.elements[s].setAttribute("value", isList);
+                                        break;
+                                    case "checkbox":
+                                    case "radio":
+                                        !0 === isList && e.elements[s].setAttribute("checked", "true")
+                                }
+                                break;
+                            case "TEXTAREA":
+                                e.elements[s].setAttribute("value", isList);
+                                break;
+                            case "SELECT":
+                                switch (e.elements[s].type) {
+                                    case "select-one":
+                                        for (n = e.elements[s].options.length - 1; n >= 0; n -= 1) {
+                                            c = e.elements[s].options[n], c.value === isList.toString() && c.setAttribute("selected", "true")
+                                        }
+                                        break;
+                                    case "select-multiple":
+                                        for (m = t[l].split(","), a = m.length - 1; a >= 0; a -= 1) {
+                                            for (n = e.elements[s].options.length - 1; n >= 0; n -= 1) {
+                                                c = e.elements[s].options[n], c.value === isList[m[a]].toString() && c.setAttribute("selected", "true")
+                                            }
+                                        }
+                                }
+                        }
+                    }
+                }
+            }
+        }
+    };
 
-	function getkeyCode(k) {
-		var keyCodes = {
-			3: "break",
-			8: "backspace / delete",
-			9: "tab",
-			12: "clear",
-			13: "enter",
-			16: "shift",
-			17: "ctrl",
-			18: "alt",
-			19: "pause/break",
-			20: "caps lock",
-			27: "escape",
-			28: "conversion",
-			29: "non-conversion",
-			32: "spacebar",
-			33: "page up",
-			34: "page down",
-			35: "end",
-			36: "home ",
-			37: "left arrow ",
-			38: "up arrow ",
-			39: "right arrow",
-			40: "down arrow ",
-			41: "select",
-			42: "print",
-			43: "execute",
-			44: "Print Screen",
-			45: "insert ",
-			46: "delete",
-			48: "0",
-			49: "1",
-			50: "2",
-			51: "3",
-			52: "4",
-			53: "5",
-			54: "6",
-			55: "7",
-			56: "8",
-			57: "9",
-			58: ":",
-			59: "semicolon (firefox), equals",
-			60: "<",
-			61: "equals (firefox)",
-			63: "?",
-			64: "@ (firefox)",
-			65: "a",
-			66: "b",
-			67: "c",
-			68: "d",
-			69: "e",
-			70: "f",
-			71: "g",
-			72: "h",
-			73: "i",
-			74: "j",
-			75: "k",
-			76: "l",
-			77: "m",
-			78: "n",
-			79: "o",
-			80: "p",
-			81: "q",
-			82: "r",
-			83: "s",
-			84: "t",
-			85: "u",
-			86: "v",
-			87: "w",
-			88: "x",
-			89: "y",
-			90: "z",
-			91: "Windows Key / Left ? / Chromebook Search key",
-			92: "right window key ",
-			93: "Windows Menu / Right ?",
-			96: "numpad 0 ",
-			97: "numpad 1 ",
-			98: "numpad 2 ",
-			99: "numpad 3 ",
-			100: "numpad 4 ",
-			101: "numpad 5 ",
-			102: "numpad 6 ",
-			103: "numpad 7 ",
-			104: "numpad 8 ",
-			105: "numpad 9 ",
-			106: "multiply ",
-			107: "add",
-			108: "numpad period (firefox)",
-			109: "subtract ",
-			110: "decimal point",
-			111: "divide ",
-			112: "f1 ",
-			113: "f2 ",
-			114: "f3 ",
-			115: "f4 ",
-			116: "f5 ",
-			117: "f6 ",
-			118: "f7 ",
-			119: "f8 ",
-			120: "f9 ",
-			121: "f10",
-			122: "f11",
-			123: "f12",
-			124: "f13",
-			125: "f14",
-			126: "f15",
-			127: "f16",
-			128: "f17",
-			129: "f18",
-			130: "f19",
-			131: "f20",
-			132: "f21",
-			133: "f22",
-			134: "f23",
-			135: "f24",
-			144: "num lock ",
-			145: "scroll lock",
-			160: "^",
-			161: "!",
-			163: "#",
-			164: "$",
-			165: "ù",
-			166: "page backward",
-			167: "page forward",
-			169: "closing paren (AZERTY)",
-			170: "*",
-			171: "~ + * key",
-			173: "minus (firefox), mute/unmute",
-			174: "decrease volume level",
-			175: "increase volume level",
-			176: "next",
-			177: "previous",
-			178: "stop",
-			179: "play/pause",
-			180: "e-mail",
-			181: "mute/unmute (firefox)",
-			182: "decrease volume level (firefox)",
-			183: "increase volume level (firefox)",
-			186: "semi-colon / ?",
-			187: "equal sign ",
-			188: "comma",
-			189: "dash ",
-			190: "period ",
-			191: "forward slash / ?",
-			192: "grave accent / ? / ?",
-			193: "?, / or °",
-			194: "numpad period (chrome)",
-			219: "open bracket ",
-			220: "back slash ",
-			221: "close bracket / ?",
-			222: "single quote / ?",
-			223: "`",
-			224: "left or right ? key (firefox)",
-			225: "altgr",
-			226: "< /git >",
-			230: "GNOME Compose Key",
-			231: "?",
-			233: "XF86Forward",
-			234: "XF86Back",
-			240: "alphanumeric",
-			242: "hiragana/katakana",
-			243: "half-width/full-width",
-			244: "kanji",
-			255: "toggle touchpad"
-		};
-		return keyCodes[k]
-	}; // keycodes https://github.com/wesbos/keycodes/blob/gh-pages/scripts.js
-	function init() {
-		if (typeof GM_getValue === 'function') {
-			var firstrun = config.getValue('player_firstrun', true);
-			var setting = config.read();
-			adjustPlayer.init(firstrun, setting);
-		} else {
-			var firstrun = config.getValue('player_firstrun', true);
-			var setting = config.read();
-			Promise.all([firstrun, setting]).then(function(values) {
-				adjustPlayer.init(values[0], values[1]);
-			});
-		}
-	}
-	init();
+    function getkeyCode(k) {
+        var keyCodes = {
+            3: "break",
+            8: "backspace / delete",
+            9: "tab",
+            12: "clear",
+            13: "enter",
+            16: "shift",
+            17: "ctrl",
+            18: "alt",
+            19: "pause/break",
+            20: "caps lock",
+            27: "escape",
+            28: "conversion",
+            29: "non-conversion",
+            32: "spacebar",
+            33: "page up",
+            34: "page down",
+            35: "end",
+            36: "home ",
+            37: "left arrow ",
+            38: "up arrow ",
+            39: "right arrow",
+            40: "down arrow ",
+            41: "select",
+            42: "print",
+            43: "execute",
+            44: "Print Screen",
+            45: "insert ",
+            46: "delete",
+            48: "0",
+            49: "1",
+            50: "2",
+            51: "3",
+            52: "4",
+            53: "5",
+            54: "6",
+            55: "7",
+            56: "8",
+            57: "9",
+            58: ":",
+            59: "semicolon (firefox), equals",
+            60: "<",
+            61: "equals (firefox)",
+            63: "?",
+            64: "@ (firefox)",
+            65: "a",
+            66: "b",
+            67: "c",
+            68: "d",
+            69: "e",
+            70: "f",
+            71: "g",
+            72: "h",
+            73: "i",
+            74: "j",
+            75: "k",
+            76: "l",
+            77: "m",
+            78: "n",
+            79: "o",
+            80: "p",
+            81: "q",
+            82: "r",
+            83: "s",
+            84: "t",
+            85: "u",
+            86: "v",
+            87: "w",
+            88: "x",
+            89: "y",
+            90: "z",
+            91: "Windows Key / Left ? / Chromebook Search key",
+            92: "right window key ",
+            93: "Windows Menu / Right ?",
+            96: "numpad 0 ",
+            97: "numpad 1 ",
+            98: "numpad 2 ",
+            99: "numpad 3 ",
+            100: "numpad 4 ",
+            101: "numpad 5 ",
+            102: "numpad 6 ",
+            103: "numpad 7 ",
+            104: "numpad 8 ",
+            105: "numpad 9 ",
+            106: "multiply ",
+            107: "add",
+            108: "numpad period (firefox)",
+            109: "subtract ",
+            110: "decimal point",
+            111: "divide ",
+            112: "f1 ",
+            113: "f2 ",
+            114: "f3 ",
+            115: "f4 ",
+            116: "f5 ",
+            117: "f6 ",
+            118: "f7 ",
+            119: "f8 ",
+            120: "f9 ",
+            121: "f10",
+            122: "f11",
+            123: "f12",
+            124: "f13",
+            125: "f14",
+            126: "f15",
+            127: "f16",
+            128: "f17",
+            129: "f18",
+            130: "f19",
+            131: "f20",
+            132: "f21",
+            133: "f22",
+            134: "f23",
+            135: "f24",
+            144: "num lock ",
+            145: "scroll lock",
+            160: "^",
+            161: "!",
+            163: "#",
+            164: "$",
+            165: "ù",
+            166: "page backward",
+            167: "page forward",
+            169: "closing paren (AZERTY)",
+            170: "*",
+            171: "~ + * key",
+            173: "minus (firefox), mute/unmute",
+            174: "decrease volume level",
+            175: "increase volume level",
+            176: "next",
+            177: "previous",
+            178: "stop",
+            179: "play/pause",
+            180: "e-mail",
+            181: "mute/unmute (firefox)",
+            182: "decrease volume level (firefox)",
+            183: "increase volume level (firefox)",
+            186: "semi-colon / ?",
+            187: "equal sign ",
+            188: "comma",
+            189: "dash ",
+            190: "period ",
+            191: "forward slash / ?",
+            192: "grave accent / ? / ?",
+            193: "?, / or °",
+            194: "numpad period (chrome)",
+            219: "open bracket ",
+            220: "back slash ",
+            221: "close bracket / ?",
+            222: "single quote / ?",
+            223: "`",
+            224: "left or right ? key (firefox)",
+            225: "altgr",
+            226: "< /git >",
+            230: "GNOME Compose Key",
+            231: "?",
+            233: "XF86Forward",
+            234: "XF86Back",
+            240: "alphanumeric",
+            242: "hiragana/katakana",
+            243: "half-width/full-width",
+            244: "kanji",
+            255: "toggle touchpad"
+        };
+        return keyCodes[k]
+    }; // keycodes https://github.com/wesbos/keycodes/blob/gh-pages/scripts.js
+    function init() {
+        if (typeof GM_getValue === 'function') {
+            var firstrun = config.getValue('player_firstrun', true);
+            var setting = config.read();
+            adjustPlayer.init(firstrun, setting);
+        } else {
+            var firstrun = config.getValue('player_firstrun', true);
+            var setting = config.read();
+            Promise.all([firstrun, setting]).then(function(values) {
+                adjustPlayer.init(values[0], values[1]);
+            });
+        }
+    }
+    init();
 })();
