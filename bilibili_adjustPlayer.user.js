@@ -298,11 +298,8 @@
         autoLoopVideo: function(set) {
             if (typeof set !== 'undefined') {
                 var controlBtn = querySelectorFromIframe('.bilibili-player-video-btn-repeat');
-                if (controlBtn !== null) {
-                    var dataText = controlBtn.querySelector('span.bilibili-player-iconfont-repeat').getAttribute("data-text");
-                    if (dataText !== '关闭洗脑循环') {
+                if (controlBtn !== null && controlBtn.classList.contains("closed")) {
                         doClick(controlBtn);
-                    }
                 }
             }
         },
@@ -2253,7 +2250,7 @@
             		<legend><label>播放视频</label></legend>
             		<div class="block">
             			<label fname="autoPlay"><input name="autoPlay" type="checkbox"><span class="checkbox"></span>自动播放视频</label>
-				<label fname="autoNextPlist"><input name="autoNextPlist" type="checkbox"><span class="checkbox"></span>自动播放下一个视频<span tooltip="使用帮助：&#10;1：此选项启用后将无视“B站”HTML5播放器自带的“自动换P功能”&#10;2：自动跳过“承包榜”、“充电名单”" class="tipsButton">[?]</span></label>
+				        <label fname="autoNextPlist"><input name="autoNextPlist" type="checkbox"><span class="checkbox"></span>自动播放下一个视频<span tooltip="使用帮助：&#10;1：此选项启用后将无视“B站”HTML5播放器自带的“自动换P功能”&#10;2：自动跳过“承包榜”、“充电名单”" class="tipsButton">[?]</span></label>
             			<label fname="autoLoopVideo"><input name="autoLoopVideo" type="checkbox"><span class="checkbox"></span>自动循环播放当前视频</label>
 						<label fname="skipSetTime" class="multiLine"><input name="skipSetTime" type="checkbox" action="childElementDisabledEvent" disabledChildElement="input,skipSetTimeValueMinutes;skipSetTimeValueSeconds" ><span class="checkbox"></span>自动从指定时间开始播放
             			<div class="newLine">
