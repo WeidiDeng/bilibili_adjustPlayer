@@ -299,7 +299,7 @@
             if (typeof set !== 'undefined') {
                 var controlBtn = querySelectorFromIframe('.bilibili-player-video-btn-repeat');
                 if (controlBtn !== null && controlBtn.classList.contains("closed")) {
-                        doClick(controlBtn);
+                    doClick(controlBtn);
                 }
             }
         },
@@ -1558,6 +1558,16 @@
             } else {
                 adjustPlayer.resizeMiniPlayer(setting.resizeMiniPlayer, setting.resizeMiniPlayerSize, setting.resizeMiniPlayerSizeResizable);
             }
+            //开启“循环播放”后，不加载“自动播放下一个视频”
+            if (setting.autoNextPlist === true && setting.autoLoopVideo === true) {
+                adjustPlayer.autoLoopVideo(setting.autoLoopVideo);
+            } else if (setting.autoNextPlist === true) {
+                window.setTimeout(function() {
+                    adjustPlayer.autoNextPlist(setting.autoNextPlist, video);
+                }, 1000);
+            } else {
+                adjustPlayer.autoLoopVideo(setting.autoLoopVideo);
+            }
             //修复没开启“自动宽屏模式”自动关灯失效
             setTimeout(function() {
                 adjustPlayer.autoLightOn(setting.autoLightOn);
@@ -1578,14 +1588,12 @@
                     });
                 }
             });
-            adjustPlayer.autoLoopVideo(setting.autoLoopVideo);
             adjustPlayer.tabDanmulist(setting.tabDanmulist);
             adjustPlayer.videoSeekingShowSendbar(setting.videoSeekingShowSendbar, video);
             adjustPlayer.autoHideSendbar(setting.autoHideSendbar, setting.shortcuts.focusDanmakuInput, video);
             adjustPlayer.autoPlay(setting.autoPlay, video);
             adjustPlayer.autoVideoSpeed(setting.autoVideoSpeed, setting.autoVideoSpeedValue, video);
             adjustPlayer.skipSetTime(setting.skipSetTime, setting.skipSetTimeValue, video);
-            adjustPlayer.autoNextPlist(setting.autoNextPlist);
 
             if (isReload) {
                 var screenMode = sessionStorage.getItem("adjustPlayer_screenMode");
@@ -2091,242 +2099,242 @@
                 /*
          <form>
             <div class="wrapper">
-            	<div class="left">
-            		<fieldset class="shortcutsGroup">
-            			<legend><label>快捷键</label></legend>
-            			<div class="block">
-            				<label>
-            					<input name="shortcutsSwitch" type="checkbox" list="shortcuts" action="childElementDisabledEvent" disabledChildElement="div,shortcutsItem" ><span class="checkbox"></span>启用快捷键功能<span tooltip="使用帮助：&#10;1：快捷键的总开关，开启后“快捷键功能”才会生效" class="tipsButton">[?]</span>
-            				</label>
-            				<div class="shortcutsItem">
-            					<label><input name="shortcutsVolumeSeekingGlobal" type="checkbox" list="shortcuts" ><span class="checkbox"></span>修改音量/快进退为全局<span tooltip="使用帮助：&#10;1：修改默认的快捷键行为，不用把当前焦点定位到播放器上也能生效。" class="tipsButton">[?]</span></label>
-            					<label><input name="shortcutsHideTips" type="checkbox" list="shortcuts" ><span class="checkbox"></span>隐藏快捷键提示语</label>
-            					<label>
-            						<input name="playPause" type="checkbox" list="shortcuts"><span class="checkbox"></span>播放/暂停视频 <span class="tipsButton" action="shortcuts" typeName="playPause">[设置]</span>
-            						<input type="text" name="playPauseKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="playPauseKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-            					<label>
-            						<input name="showHideDanmuku" type="checkbox" list="shortcuts"><span class="checkbox"></span>显示/隐藏弹幕 <span class="tipsButton" action="shortcuts" typeName="showHideDanmuku">[设置]</span>
-            						<input type="text" name="showHideDanmukuKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="showHideDanmukuKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-            					<label>
-            						<input name="playerWide" type="checkbox" list="shortcuts"><span class="checkbox"></span>宽屏模式 <span class="tipsButton" action="shortcuts" typeName="playerWide">[设置]</span>
-            						<input type="text" name="playerWideKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="playerWideKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-            					<label>
-            						<input name="fullscreen" type="checkbox" list="shortcuts"><span class="checkbox"></span>全屏模式 <span class="tipsButton" action="shortcuts" typeName="fullscreen">[设置]</span>
-            						<input type="text" name="fullscreenKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="fullscreenKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-            					<label>
-            						<input name="webfullscreen" type="checkbox" list="shortcuts"><span class="checkbox"></span>网页全屏模式 <span class="tipsButton" action="shortcuts" typeName="webfullscreen">[设置]</span>
-            						<input type="text" name="webfullscreenKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="webfullscreenKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-								<label>
-            						<input name="videoMute" type="checkbox" list="shortcuts"><span class="checkbox"></span>静音/恢复静音  <span class="tipsButton" action="shortcuts" typeName="videoMute">[设置]</span>
-            						<input type="text" name="videoMuteKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="videoMuteKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-								<label>
-            						<input name="lightOnOff" type="checkbox" list="shortcuts"><span class="checkbox"></span>播放器关灯/开灯  <span class="tipsButton" action="shortcuts" typeName="lightOnOff">[设置]</span>
-            						<input type="text" name="lightOnOffKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="lightOnOffKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-								<label>
-            						<input name="loopVideoOnOff" type="checkbox" list="shortcuts"><span class="checkbox"></span>循环播放  <span class="tipsButton" action="shortcuts" typeName="loopVideoOnOff">[设置]</span>
-            						<input type="text" name="loopVideoOnOffKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="loopVideoOnOffKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-								<label>
-            						<input name="focusPlayer" type="checkbox" list="shortcuts"><span class="checkbox"></span>定位到播放器<span tooltip="使用帮助：&#10;1：具体位置根据“功能调整” - “自动定位到XXX顶端” 设置的值来定位&#10（没设置“功能调整” - “自动定位到XXX顶端”功能的话，默认定位到播放器顶端）&#10;2：按下后会在“播放器位置”，和“之前浏览的位置”进行切换" class="tipsButton">[?]</span>
-									<span class="tipsButton" action="shortcuts" typeName="focusPlayer">[设置]</span>
-            						<input type="text" name="focusPlayerKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="focusPlayerKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-								<label>
-            						<input name="focusDanmakuInput" type="checkbox" list="shortcuts"><span class="checkbox"></span>定位到弹幕框<span tooltip="使用帮助：&#10;1：焦点在弹幕框时键盘按 Tab 键隐藏弹幕框&#10;2：开启了“自动隐藏弹幕栏”并设置了“定位到弹幕框的快捷键”之后，请用快捷键来显示弹幕框" class="tipsButton">[?]</span>
-									<span class="tipsButton" action="shortcuts" typeName="focusDanmakuInput">[设置]</span>
-            						<input type="text" name="focusDanmakuInputKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="focusDanmakuInputKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-								<label>
-            						<input name="moveToPlayerFocus" type="checkbox" list="shortcuts"><span class="checkbox"></span>焦点移到播放器
-									<span class="tipsButton" action="shortcuts" typeName="moveToPlayerFocus">[设置]</span>
-            						<input type="text" name="moveToPlayerFocusKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="moveToPlayerFocusKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-								<label>
-            						<input name="addVideoSpeed" type="checkbox" list="shortcuts"><span class="checkbox"></span>增加播放速度 <span class="tipsButton" action="shortcuts" typeName="addVideoSpeed">[设置]</span>
-            						<input type="text" name="addVideoSpeedKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="addVideoSpeedKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-            					<label>
-            						<input name="subVideoSpeed" type="checkbox" list="shortcuts"><span class="checkbox"></span>减少播放速度 <span class="tipsButton" action="shortcuts" typeName="subVideoSpeed">[设置]</span>
-            						<input type="text" name="subVideoSpeedKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="subVideoSpeedKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-								<label>
-            						<input name="resetVideoSpeed" type="checkbox" list="shortcuts"><span class="checkbox"></span>重置播放速度 <span class="tipsButton" action="shortcuts" typeName="resetVideoSpeed">[设置]</span>
-            						<input type="text" name="resetVideoSpeedKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="resetVideoSpeedKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-								<label>
-            						<input name="prevPlist" type="checkbox" list="shortcuts"><span class="checkbox"></span>上一个视频  <span class="tipsButton" action="shortcuts" typeName="prevPlist">[设置]</span>
-            						<input type="text" name="prevPlistKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="prevPlistKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-            					<label>
-            						<input name="nextPlist" type="checkbox" list="shortcuts"><span class="checkbox"></span>下一个视频 <span class="tipsButton" action="shortcuts" typeName="nextPlist">[设置]</span>
-            						<input type="text" name="nextPlistKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="nextPlistKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-								<label>
-            						<input name="prevVideoFramerate" type="checkbox" list="shortcuts"><span class="checkbox"></span>快退一帧  <span class="tipsButton" action="shortcuts" typeName="prevVideoFramerate">[设置]</span>
-            						<input type="text" name="prevVideoFramerateKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="prevVideoFramerateKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-            					<label>
-            						<input name="nextVideoFramerate" type="checkbox" list="shortcuts"><span class="checkbox"></span>快进一帧 <span class="tipsButton" action="shortcuts" typeName="nextVideoFramerate">[设置]</span>
-            						<input type="text" name="nextVideoFramerateKeyName" readOnly="true" list="shortcuts">
-            						<input type="hidden" name="nextVideoFramerateKeyCode" list="shortcuts" KeyCode="true">
-            					</label>
-            				</div>
-            			</div>
-            		</fieldset>
-            		<fieldset class="danmukuGroup">
-            			<legend><label>弹幕</label></legend>
-            			<div class="block">
-            				<label fname="hideDanmuku">
-            					<input name="hideDanmuku" type="checkbox"><span class="checkbox"></span>默认隐藏
-            					<select name="hideDanmukuType">
-            						<option value="all" selected="selected">所有</option>
-            						<option value="bangumi">番剧</option>
-            					</select>弹幕<span tooltip="使用帮助：&#10;1：选择默认隐藏“番剧”弹幕时，只隐藏 bangumi.bilibili.com 域名，www.bilibili.com/bangumi/play/ep 下视频的弹幕" class="tipsButton">[?]</span>
-            				</label>
-            				<label fname="hideDanmukuFilterType">
-            					<input name="hideDanmukuFilterType" type="checkbox"><span class="checkbox"></span>默认隐藏
-            					<select name="hideDanmukuFilterType_Type">
-            						<option value="top">顶端</option>
-            						<option value="bottom">底端</option>
-									<option value="topAndbottom" selected="selected">顶端+底端</option>
-									<option value="scroll">滚动</option>
-            					</select>弹幕
-            				</label>
-							<label fname="danmukuPreventShade">
-								<input name="danmukuPreventShade" type="checkbox"><span class="checkbox"></span>默认
-								<select name="danmukuPreventShadeType">
-            						<option value="on" selected="selected">开启</option>
-            						<option value="off">关闭</option>
-            					</select>防挡弹幕<span tooltip="使用帮助：&#10;1：“番剧”页面和普通页面的“防挡弹幕”默认设置竟然不一样？开启后设置让它一致 " class="tipsButton">[?]</span>
-							</label>
-							<label fname="tabDanmulist"><input name="tabDanmulist" type="checkbox"><span class="checkbox"></span>默认展开弹幕列表</label>
-            		</div>
-            	</fieldset>
+                <div class="left">
+                    <fieldset class="shortcutsGroup">
+                        <legend><label>快捷键</label></legend>
+                        <div class="block">
+                            <label>
+                                <input name="shortcutsSwitch" type="checkbox" list="shortcuts" action="childElementDisabledEvent" disabledChildElement="div,shortcutsItem" ><span class="checkbox"></span>启用快捷键功能<span tooltip="使用帮助：&#10;1：快捷键的总开关，开启后“快捷键功能”才会生效" class="tipsButton">[?]</span>
+                            </label>
+                            <div class="shortcutsItem">
+                                <label><input name="shortcutsVolumeSeekingGlobal" type="checkbox" list="shortcuts" ><span class="checkbox"></span>修改音量/快进退为全局<span tooltip="使用帮助：&#10;1：修改默认的快捷键行为，不用把当前焦点定位到播放器上也能生效。" class="tipsButton">[?]</span></label>
+                                <label><input name="shortcutsHideTips" type="checkbox" list="shortcuts" ><span class="checkbox"></span>隐藏快捷键提示语</label>
+                                <label>
+                                    <input name="playPause" type="checkbox" list="shortcuts"><span class="checkbox"></span>播放/暂停视频 <span class="tipsButton" action="shortcuts" typeName="playPause">[设置]</span>
+                                    <input type="text" name="playPauseKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="playPauseKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="showHideDanmuku" type="checkbox" list="shortcuts"><span class="checkbox"></span>显示/隐藏弹幕 <span class="tipsButton" action="shortcuts" typeName="showHideDanmuku">[设置]</span>
+                                    <input type="text" name="showHideDanmukuKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="showHideDanmukuKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="playerWide" type="checkbox" list="shortcuts"><span class="checkbox"></span>宽屏模式 <span class="tipsButton" action="shortcuts" typeName="playerWide">[设置]</span>
+                                    <input type="text" name="playerWideKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="playerWideKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="fullscreen" type="checkbox" list="shortcuts"><span class="checkbox"></span>全屏模式 <span class="tipsButton" action="shortcuts" typeName="fullscreen">[设置]</span>
+                                    <input type="text" name="fullscreenKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="fullscreenKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="webfullscreen" type="checkbox" list="shortcuts"><span class="checkbox"></span>网页全屏模式 <span class="tipsButton" action="shortcuts" typeName="webfullscreen">[设置]</span>
+                                    <input type="text" name="webfullscreenKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="webfullscreenKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="videoMute" type="checkbox" list="shortcuts"><span class="checkbox"></span>静音/恢复静音  <span class="tipsButton" action="shortcuts" typeName="videoMute">[设置]</span>
+                                    <input type="text" name="videoMuteKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="videoMuteKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="lightOnOff" type="checkbox" list="shortcuts"><span class="checkbox"></span>播放器关灯/开灯  <span class="tipsButton" action="shortcuts" typeName="lightOnOff">[设置]</span>
+                                    <input type="text" name="lightOnOffKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="lightOnOffKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="loopVideoOnOff" type="checkbox" list="shortcuts"><span class="checkbox"></span>循环播放  <span class="tipsButton" action="shortcuts" typeName="loopVideoOnOff">[设置]</span>
+                                    <input type="text" name="loopVideoOnOffKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="loopVideoOnOffKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="focusPlayer" type="checkbox" list="shortcuts"><span class="checkbox"></span>定位到播放器<span tooltip="使用帮助：&#10;1：具体位置根据“功能调整” - “自动定位到XXX顶端” 设置的值来定位&#10（没设置“功能调整” - “自动定位到XXX顶端”功能的话，默认定位到播放器顶端）&#10;2：按下后会在“播放器位置”，和“之前浏览的位置”进行切换" class="tipsButton">[?]</span>
+                                    <span class="tipsButton" action="shortcuts" typeName="focusPlayer">[设置]</span>
+                                    <input type="text" name="focusPlayerKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="focusPlayerKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="focusDanmakuInput" type="checkbox" list="shortcuts"><span class="checkbox"></span>定位到弹幕框<span tooltip="使用帮助：&#10;1：焦点在弹幕框时键盘按 Tab 键隐藏弹幕框&#10;2：开启了“自动隐藏弹幕栏”并设置了“定位到弹幕框的快捷键”之后，请用快捷键来显示弹幕框" class="tipsButton">[?]</span>
+                                    <span class="tipsButton" action="shortcuts" typeName="focusDanmakuInput">[设置]</span>
+                                    <input type="text" name="focusDanmakuInputKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="focusDanmakuInputKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="moveToPlayerFocus" type="checkbox" list="shortcuts"><span class="checkbox"></span>焦点移到播放器
+                                    <span class="tipsButton" action="shortcuts" typeName="moveToPlayerFocus">[设置]</span>
+                                    <input type="text" name="moveToPlayerFocusKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="moveToPlayerFocusKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="addVideoSpeed" type="checkbox" list="shortcuts"><span class="checkbox"></span>增加播放速度 <span class="tipsButton" action="shortcuts" typeName="addVideoSpeed">[设置]</span>
+                                    <input type="text" name="addVideoSpeedKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="addVideoSpeedKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="subVideoSpeed" type="checkbox" list="shortcuts"><span class="checkbox"></span>减少播放速度 <span class="tipsButton" action="shortcuts" typeName="subVideoSpeed">[设置]</span>
+                                    <input type="text" name="subVideoSpeedKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="subVideoSpeedKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="resetVideoSpeed" type="checkbox" list="shortcuts"><span class="checkbox"></span>重置播放速度 <span class="tipsButton" action="shortcuts" typeName="resetVideoSpeed">[设置]</span>
+                                    <input type="text" name="resetVideoSpeedKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="resetVideoSpeedKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="prevPlist" type="checkbox" list="shortcuts"><span class="checkbox"></span>上一个视频  <span class="tipsButton" action="shortcuts" typeName="prevPlist">[设置]</span>
+                                    <input type="text" name="prevPlistKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="prevPlistKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="nextPlist" type="checkbox" list="shortcuts"><span class="checkbox"></span>下一个视频 <span class="tipsButton" action="shortcuts" typeName="nextPlist">[设置]</span>
+                                    <input type="text" name="nextPlistKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="nextPlistKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="prevVideoFramerate" type="checkbox" list="shortcuts"><span class="checkbox"></span>快退一帧  <span class="tipsButton" action="shortcuts" typeName="prevVideoFramerate">[设置]</span>
+                                    <input type="text" name="prevVideoFramerateKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="prevVideoFramerateKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                                <label>
+                                    <input name="nextVideoFramerate" type="checkbox" list="shortcuts"><span class="checkbox"></span>快进一帧 <span class="tipsButton" action="shortcuts" typeName="nextVideoFramerate">[设置]</span>
+                                    <input type="text" name="nextVideoFramerateKeyName" readOnly="true" list="shortcuts">
+                                    <input type="hidden" name="nextVideoFramerateKeyCode" list="shortcuts" KeyCode="true">
+                                </label>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <fieldset class="danmukuGroup">
+                        <legend><label>弹幕</label></legend>
+                        <div class="block">
+                            <label fname="hideDanmuku">
+                                <input name="hideDanmuku" type="checkbox"><span class="checkbox"></span>默认隐藏
+                                <select name="hideDanmukuType">
+                                    <option value="all" selected="selected">所有</option>
+                                    <option value="bangumi">番剧</option>
+                                </select>弹幕<span tooltip="使用帮助：&#10;1：选择默认隐藏“番剧”弹幕时，只隐藏 bangumi.bilibili.com 域名，www.bilibili.com/bangumi/play/ep 下视频的弹幕" class="tipsButton">[?]</span>
+                            </label>
+                            <label fname="hideDanmukuFilterType">
+                                <input name="hideDanmukuFilterType" type="checkbox"><span class="checkbox"></span>默认隐藏
+                                <select name="hideDanmukuFilterType_Type">
+                                    <option value="top">顶端</option>
+                                    <option value="bottom">底端</option>
+                                    <option value="topAndbottom" selected="selected">顶端+底端</option>
+                                    <option value="scroll">滚动</option>
+                                </select>弹幕
+                            </label>
+                            <label fname="danmukuPreventShade">
+                                <input name="danmukuPreventShade" type="checkbox"><span class="checkbox"></span>默认
+                                <select name="danmukuPreventShadeType">
+                                    <option value="on" selected="selected">开启</option>
+                                    <option value="off">关闭</option>
+                                </select>防挡弹幕<span tooltip="使用帮助：&#10;1：“番剧”页面和普通页面的“防挡弹幕”默认设置竟然不一样？开启后设置让它一致 " class="tipsButton">[?]</span>
+                            </label>
+                            <label fname="tabDanmulist"><input name="tabDanmulist" type="checkbox"><span class="checkbox"></span>默认展开弹幕列表</label>
+                    </div>
+                </fieldset>
             </div>
             <div class="right">
-            	<fieldset class="modeGroup">
-            		<legend><label>播放模式</label></legend>
-            		<div class="block">
-						<label fname="autoWidescreen" class="multiLine">
-							<input name="autoWidescreen" type="checkbox" action="childElementDisabledEvent" disabledChildElement="input,autoWidescreenFullscreen" ><span class="checkbox"></span>自动宽屏
-							<div class="newLine">退出全屏后
-								<select name="autoWidescreenFullscreen" disabled="">
-            						<option value="off" selected="selected">关闭</option>
-            						<option value="on">开启</option>
-            					</select>自动宽屏
-								<span tooltip="使用帮助：&#10;1：开启“自动宽屏”功能后，退出全屏后是否开启宽屏" class="tipsButton">[?]</span>
-							</div>
-						</label>
-            			<label fname="autoWebFullScreen"><input name="autoWebFullScreen" type="checkbox"><span class="checkbox"></span>自动网页全屏<span tooltip="使用帮助：&#10;1：按Esc键退出网页全屏&#10;3：开启此功能后，调整大小，自动宽屏，定位功能不会启用" class="tipsButton">[?]</span></label>
-            			<label fname="doubleClickFullScreen" class="multiLine"><input name="doubleClickFullScreen" type="checkbox" action="childElementDisabledEvent" disabledChildElement="input,doubleClickFullScreenDelayed" ><span class="checkbox"></span>双击全屏<span tooltip="使用帮助：&#10;1：双击视频区域全屏" class="tipsButton">[?]</span>
-						<div class="newLine">播放/暂停延时<input name="doubleClickFullScreenDelayed" type="number" min="0" max="500" placeholder="200" value="200" style="width: 45px;">毫秒<span tooltip="使用帮助：&#10;1：开启“双击全屏”功能后点击视频区域“播放/暂停”会增加延时，使全屏功能更流畅&#10;2：由于增加了延时，导致点击视频区域“播放/暂停”功能不是及时的，这时可以用键盘空格键暂停&#10;3：毫秒数设置为0，关闭延时&#10;4：由于电脑的性能，实际的延迟比设置的更高" class="tipsButton">[?]</span></div></label>
-					</div>
-            	</fieldset>
-            	<fieldset class="playbackGroup">
-            		<legend><label>播放视频</label></legend>
-            		<div class="block">
-            			<label fname="autoPlay"><input name="autoPlay" type="checkbox"><span class="checkbox"></span>自动播放视频</label>
-				        <label fname="autoNextPlist"><input name="autoNextPlist" type="checkbox"><span class="checkbox"></span>自动播放下一个视频<span tooltip="使用帮助：&#10;1：此选项启用后将无视“B站”HTML5播放器自带的“自动换P功能”&#10;2：自动跳过“承包榜”、“充电名单”" class="tipsButton">[?]</span></label>
-            			<label fname="autoLoopVideo"><input name="autoLoopVideo" type="checkbox"><span class="checkbox"></span>自动循环播放当前视频<span tooltip="使用帮助：&#10;1：开启此功能后“自动播放下一个视频”不会启用 &#10;" class="tipsButton">[?]</span></label>
-						<label fname="skipSetTime" class="multiLine"><input name="skipSetTime" type="checkbox" action="childElementDisabledEvent" disabledChildElement="input,skipSetTimeValueMinutes;skipSetTimeValueSeconds" ><span class="checkbox"></span>自动从指定时间开始播放
-            			<div class="newLine">
-            				<input name="skipSetTimeValueMinutes" type="number" min="0" max="60" placeholder="0" value="0" style="width: 45px;" disabled="">分钟
-            				<input name="skipSetTimeValueSeconds" type="number" min="0" max="60" placeholder="0" value="0" style="width: 45px;" disabled="">秒
-            				<input type="hidden" name="skipSetTimeValue">
-            			</div></label>
-            			<label fname="autoVideoSpeed">
-						    <input name="autoVideoSpeed" type="checkbox"><span class="checkbox"></span>修改默认播放速度
-            				<select name="autoVideoSpeedValue">
-            					<option value="0.5">0.5倍速</option>
-            					<option value="0.75">0.75倍速</option>
-            					<option value="1" selected="selected">正常</option>
-            					<option value="1.25">1.25倍速</option>
-            					<option value="1.5">1.5倍速</option>
-            					<option value="2">2倍速</option>
-            				</select>
-            			</label>
-            		</div>
-            	</fieldset>
-            	<fieldset class="functionGroup">
-            			<legend><label>功能调整</label></legend>
-            			<div class="block">
-            				<label fname="autoFocusPlayer" class="multiLine"><input name="autoFocusPlayer" type="checkbox" action="childElementDisabledEvent" disabledChildElement="input,autoFocusPlayerOffsetType;autoFocusPlayerOffsetValue" ><span class="checkbox"></span>自动定位到播放器顶端
-            				<div class="newLine">定位偏移
-            					<select name="autoFocusPlayerOffsetType" disabled="">
-            						<option value="sub" selected="selected">上移</option>
-            						<option value="add">下移</option>
-            					</select>
-            					<input name="autoFocusPlayerOffsetValue" type="number" min="0" value="10" placeholder="10" style="width: 45px;" disabled="">像素
-								<span tooltip="使用帮助：&#10;1：可以设置偏移位置，往上或往下移。" class="tipsButton">[?]</span>
-            				</span>
-            			</div></label>
-            			<label fname="videoSeekingShowSendbar"><input name="videoSeekingShowSendbar" type="checkbox"><span class="checkbox"></span>快进退时显示进度条</label>
-            			<label fname="autoHideSendbar"><input name="autoHideSendbar" type="checkbox"><span class="checkbox"></span>自动隐藏弹幕栏<span tooltip="使用帮助：&#10;1：需要开启“宽屏模式”或“网页全屏模式”才会生效&#10;2：鼠标移动到播放器顶部显示弹幕栏 &#10;3：如果发现画面出现“黑边”请开启“手动指定播放器大小”功能&#10; 并使用 [调整大小] 功能调整大小&#10;" class="tipsButton">[?]</span></label>
-            			<label fname="resizePlayer" class="multiLine">
-            				<input name="resizePlayer" type="checkbox"><span class="checkbox"></span>指定播放器大小
-            				<span class="tipsButton" action="adjustPlayerSize" tooltip="使用帮助：&#10;1：点击[调整大小]进行调整">[调整大小]</span>
-							<div class="newLine">
-								视频信息&UP主位置
-								<input name="resizePlayerVideoInfoAndUpInfoPosition" type="text" class="hide" readOnly="true" value="bottom" style="max-width:60px;">
-							</div>
-							<div class="newLine">宽度<input name="resizePlayerWidth" type="text" class="hide" readOnly="true" value="1024">
-            					比例<input name="resizePlayerRatio" type="text" class="hide" readOnly="true" value="16/9">
-							</div>
-						</label>
-            			<label fname="resizeMiniPlayer" class="multiLine">
-            				<input name="resizeMiniPlayer" type="checkbox" action="childElementDisabledEvent" disabledChildElement="input,resizeMiniPlayerSize;resizeMiniPlayerSizeResizable" ><span class="checkbox"></span>迷你播放器宽度
-            				<input name="resizeMiniPlayerSize" type="number" min="0" value="320" placeholder="320" style="width: 45px;" disabled="">像素
-            				<span tooltip="使用帮助：&#10;1：调整评论处迷你播放器大小，输入合适的宽度后自动计算新大小&#10;   （新大小比例为 16：9）&#10;" class="tipsButton">[?]</span>
-						<div class="newLine">
-							迷你播放器
-							<select name="resizeMiniPlayerSizeResizable" disabled="">
-            					<option value="off" selected="selected">关闭</option>
-            					<option value="on">开启</option>
-            				</select>可调整大小
-							<span tooltip="使用帮助：&#10;1：开启“修改迷你播放器宽度”后，拖动迷你播放器右下角调节按钮，可以调整大小。&#10;2：此功能是“实验功能”，部分页面可能不起作用" class="tipsButton">[?]</span>
-						</div></label>
-						<label fname="autoLightOn"><input name="autoLightOn" type="checkbox"><span class="checkbox"></span>自动播放器关灯<span tooltip="使用帮助：&#10;1：在视频区域内点击右键进行开，关灯操作&#10;2：双击黑暗区域开灯。" class="tipsButton">[?]</span></label>
-            		</div>
-            	</fieldset>
+                <fieldset class="modeGroup">
+                    <legend><label>播放模式</label></legend>
+                    <div class="block">
+                        <label fname="autoWidescreen" class="multiLine">
+                            <input name="autoWidescreen" type="checkbox" action="childElementDisabledEvent" disabledChildElement="input,autoWidescreenFullscreen" ><span class="checkbox"></span>自动宽屏
+                            <div class="newLine">退出全屏后
+                                <select name="autoWidescreenFullscreen" disabled="">
+                                    <option value="off" selected="selected">关闭</option>
+                                    <option value="on">开启</option>
+                                </select>自动宽屏
+                                <span tooltip="使用帮助：&#10;1：开启“自动宽屏”功能后，退出全屏后是否开启宽屏" class="tipsButton">[?]</span>
+                            </div>
+                        </label>
+                        <label fname="autoWebFullScreen"><input name="autoWebFullScreen" type="checkbox"><span class="checkbox"></span>自动网页全屏<span tooltip="使用帮助：&#10;1：按Esc键退出网页全屏&#10;3：开启此功能后，调整大小，自动宽屏，定位功能不会启用" class="tipsButton">[?]</span></label>
+                        <label fname="doubleClickFullScreen" class="multiLine"><input name="doubleClickFullScreen" type="checkbox" action="childElementDisabledEvent" disabledChildElement="input,doubleClickFullScreenDelayed" ><span class="checkbox"></span>双击全屏<span tooltip="使用帮助：&#10;1：双击视频区域全屏" class="tipsButton">[?]</span>
+                        <div class="newLine">播放/暂停延时<input name="doubleClickFullScreenDelayed" type="number" min="0" max="500" placeholder="200" value="200" style="width: 45px;">毫秒<span tooltip="使用帮助：&#10;1：开启“双击全屏”功能后点击视频区域“播放/暂停”会增加延时，使全屏功能更流畅&#10;2：由于增加了延时，导致点击视频区域“播放/暂停”功能不是及时的，这时可以用键盘空格键暂停&#10;3：毫秒数设置为0，关闭延时&#10;4：由于电脑的性能，实际的延迟比设置的更高" class="tipsButton">[?]</span></div></label>
+                    </div>
+                </fieldset>
+                <fieldset class="playbackGroup">
+                    <legend><label>播放视频</label></legend>
+                    <div class="block">
+                        <label fname="autoPlay"><input name="autoPlay" type="checkbox"><span class="checkbox"></span>自动播放视频</label>
+                        <label fname="autoNextPlist"><input name="autoNextPlist" type="checkbox"><span class="checkbox"></span>自动播放下一个视频<span tooltip="使用帮助：&#10;1：此选项启用后将无视“B站”HTML5播放器自带的“自动换P功能”&#10;2：自动跳过“承包榜”、“充电名单”" class="tipsButton">[?]</span></label>
+                        <label fname="autoLoopVideo"><input name="autoLoopVideo" type="checkbox"><span class="checkbox"></span>自动循环播放当前视频<span tooltip="使用帮助：&#10;1：开启此功能后“自动播放下一个视频”不会启用 &#10;" class="tipsButton">[?]</span></label>
+                        <label fname="skipSetTime" class="multiLine"><input name="skipSetTime" type="checkbox" action="childElementDisabledEvent" disabledChildElement="input,skipSetTimeValueMinutes;skipSetTimeValueSeconds" ><span class="checkbox"></span>自动从指定时间开始播放
+                        <div class="newLine">
+                            <input name="skipSetTimeValueMinutes" type="number" min="0" max="60" placeholder="0" value="0" style="width: 45px;" disabled="">分钟
+                            <input name="skipSetTimeValueSeconds" type="number" min="0" max="60" placeholder="0" value="0" style="width: 45px;" disabled="">秒
+                            <input type="hidden" name="skipSetTimeValue">
+                        </div></label>
+                        <label fname="autoVideoSpeed">
+                            <input name="autoVideoSpeed" type="checkbox"><span class="checkbox"></span>修改默认播放速度
+                            <select name="autoVideoSpeedValue">
+                                <option value="0.5">0.5倍速</option>
+                                <option value="0.75">0.75倍速</option>
+                                <option value="1" selected="selected">正常</option>
+                                <option value="1.25">1.25倍速</option>
+                                <option value="1.5">1.5倍速</option>
+                                <option value="2">2倍速</option>
+                            </select>
+                        </label>
+                    </div>
+                </fieldset>
+                <fieldset class="functionGroup">
+                        <legend><label>功能调整</label></legend>
+                        <div class="block">
+                            <label fname="autoFocusPlayer" class="multiLine"><input name="autoFocusPlayer" type="checkbox" action="childElementDisabledEvent" disabledChildElement="input,autoFocusPlayerOffsetType;autoFocusPlayerOffsetValue" ><span class="checkbox"></span>自动定位到播放器顶端
+                            <div class="newLine">定位偏移
+                                <select name="autoFocusPlayerOffsetType" disabled="">
+                                    <option value="sub" selected="selected">上移</option>
+                                    <option value="add">下移</option>
+                                </select>
+                                <input name="autoFocusPlayerOffsetValue" type="number" min="0" value="10" placeholder="10" style="width: 45px;" disabled="">像素
+                                <span tooltip="使用帮助：&#10;1：可以设置偏移位置，往上或往下移。" class="tipsButton">[?]</span>
+                            </span>
+                        </div></label>
+                        <label fname="videoSeekingShowSendbar"><input name="videoSeekingShowSendbar" type="checkbox"><span class="checkbox"></span>快进退时显示进度条</label>
+                        <label fname="autoHideSendbar"><input name="autoHideSendbar" type="checkbox"><span class="checkbox"></span>自动隐藏弹幕栏<span tooltip="使用帮助：&#10;1：需要开启“宽屏模式”或“网页全屏模式”才会生效&#10;2：鼠标移动到播放器顶部显示弹幕栏 &#10;3：如果发现画面出现“黑边”请开启“手动指定播放器大小”功能&#10; 并使用 [调整大小] 功能调整大小&#10;" class="tipsButton">[?]</span></label>
+                        <label fname="resizePlayer" class="multiLine">
+                            <input name="resizePlayer" type="checkbox"><span class="checkbox"></span>指定播放器大小
+                            <span class="tipsButton" action="adjustPlayerSize" tooltip="使用帮助：&#10;1：点击[调整大小]进行调整">[调整大小]</span>
+                            <div class="newLine">
+                                视频信息&UP主位置
+                                <input name="resizePlayerVideoInfoAndUpInfoPosition" type="text" class="hide" readOnly="true" value="bottom" style="max-width:60px;">
+                            </div>
+                            <div class="newLine">宽度<input name="resizePlayerWidth" type="text" class="hide" readOnly="true" value="1024">
+                                比例<input name="resizePlayerRatio" type="text" class="hide" readOnly="true" value="16/9">
+                            </div>
+                        </label>
+                        <label fname="resizeMiniPlayer" class="multiLine">
+                            <input name="resizeMiniPlayer" type="checkbox" action="childElementDisabledEvent" disabledChildElement="input,resizeMiniPlayerSize;resizeMiniPlayerSizeResizable" ><span class="checkbox"></span>迷你播放器宽度
+                            <input name="resizeMiniPlayerSize" type="number" min="0" value="320" placeholder="320" style="width: 45px;" disabled="">像素
+                            <span tooltip="使用帮助：&#10;1：调整评论处迷你播放器大小，输入合适的宽度后自动计算新大小&#10;   （新大小比例为 16：9）&#10;" class="tipsButton">[?]</span>
+                        <div class="newLine">
+                            迷你播放器
+                            <select name="resizeMiniPlayerSizeResizable" disabled="">
+                                <option value="off" selected="selected">关闭</option>
+                                <option value="on">开启</option>
+                            </select>可调整大小
+                            <span tooltip="使用帮助：&#10;1：开启“修改迷你播放器宽度”后，拖动迷你播放器右下角调节按钮，可以调整大小。&#10;2：此功能是“实验功能”，部分页面可能不起作用" class="tipsButton">[?]</span>
+                        </div></label>
+                        <label fname="autoLightOn"><input name="autoLightOn" type="checkbox"><span class="checkbox"></span>自动播放器关灯<span tooltip="使用帮助：&#10;1：在视频区域内点击右键进行开，关灯操作&#10;2：双击黑暗区域开灯。" class="tipsButton">[?]</span></label>
+                    </div>
+                </fieldset>
             </div>
         </div>
         <div class="info">
-          	<span class="ver"></span>
-			<span class="storageType">
-          		<a href="javascript:void(0);" action="storageType" tooltip="脚本设置无法保存的，请点这里！">存储类型</a>
-           	</span>
-           	<span class="feedback">
-          		<a href="https://github.com/kkren/bilibili_adjustPlayer/issues" target="_blank">反馈</a>
-           	</span>
+            <span class="ver"></span>
+            <span class="storageType">
+                <a href="javascript:void(0);" action="storageType" tooltip="脚本设置无法保存的，请点这里！">存储类型</a>
+            </span>
+            <span class="feedback">
+                <a href="https://github.com/kkren/bilibili_adjustPlayer/issues" target="_blank">反馈</a>
+            </span>
         </div>
         <div class="btns">
-           	<div class="btn" action="restoreDef">恢复默认设置</div>
-           	<div class="btn" action="save">保存</div>
-           	<div class="btn btn-cancel" action="close">关闭</div>
+            <div class="btn" action="restoreDef">恢复默认设置</div>
+            <div class="btn" action="save">保存</div>
+            <div class="btn btn-cancel" action="close">关闭</div>
         </div>
         </form>
             */
@@ -2528,12 +2536,12 @@
             <div class="info">
               <p>当前宽度：<span class="width">1024</span> px</p>
               <p>当前高度：<span class="height">576</span> px</p>
-			  <p>当前比例：<span class="ratio">16/9</span></p>
+              <p>当前比例：<span class="ratio">16/9</span></p>
             </div>
             <div class="tips-text">
-			  <p>调整后在页面可视区域宽度过小时，不会生效。</p>
-			  <p>调整后的大小有宽度限制，最小宽度为740像素，最小高度为408像素。</p>
-			  <p>调整后的大小在“普通模式”下会根据“播放器顶栏”、“弹幕栏”、“播放器控件”的大小自动计算出合适的尺寸。</p>
+              <p>调整后在页面可视区域宽度过小时，不会生效。</p>
+              <p>调整后的大小有宽度限制，最小宽度为740像素，最小高度为408像素。</p>
+              <p>调整后的大小在“普通模式”下会根据“播放器顶栏”、“弹幕栏”、“播放器控件”的大小自动计算出合适的尺寸。</p>
             </div>
             <div class="drag-arrow">
               <p style="color: red; font-size: 80px;">↘</p>
@@ -2550,13 +2558,13 @@
             <div class="content">
               <p class="bold">使用帮助</p>
               <p>1.拖动右下角“外框”调整播放器大小（<span style="color: red;">↘</span> 处）。</p>
-			  <p>2.当前灰色区域的大小，保存后就是播放器的新大小。</p>
+              <p>2.当前灰色区域的大小，保存后就是播放器的新大小。</p>
               <p>3.调整到合适的大小，点击保存。</p>
               <div class="box custom-videoInfoAndUpInfoPosition">
                   <div style="text-align: left;">视频信息&UP主位置：</div>
                     <select name="customVideoInfoAndUpInfoPosition" style="width:100%;margin-top: 10px;">
-						<option value="bottom" selected="selected">视频底部</option>
-						<option value="top">视频顶部</option>
+                        <option value="bottom" selected="selected">视频底部</option>
+                        <option value="top">视频顶部</option>
                     </select>
               </div>
               <div class="box custom-ratio">
@@ -2565,8 +2573,8 @@
                         <option value="3/2">3 / 2</option>
                         <option value="4/3">4 / 3</option>
                         <option value="15/9">15 / 9</option>
-						<option value="16/9" selected="selected">16 / 9</option>
-						<option value="16/10">16 / 10</option>
+                        <option value="16/9" selected="selected">16 / 9</option>
+                        <option value="16/10">16 / 10</option>
                         <option value="18/9">18 / 9</option>
                         <option value="21/9">21 / 9</option>
                         <option value="32/9">32 / 9</option>
@@ -2574,7 +2582,7 @@
               </div>
               <div class="box custom-width">
                   <div style="text-align: left;">快速保存宽度为：</div>
-				  <div class="btn b-btn" action="quickSave" customWidth="1153">1153px</div>
+                  <div class="btn b-btn" action="quickSave" customWidth="1153">1153px</div>
                   <div class="btn b-btn" action="quickSave" customWidth="1280">1280px</div>
                   <div class="btn b-btn" action="quickSave" customWidth="1580">1580px</div>
                   <div class="btn b-btn" action="quickSave" customWidth="1920">1920px</div>
@@ -2582,7 +2590,7 @@
               </div>
               <div class="btn b-btn" action="save" style="width:49%;float:left;" >保存</div>
               <div class="btn b-btn-cancel" action="cancel" style="width:49%;float:right;" >取消</div>
-			  <div style="clear: both;"></div>
+              <div style="clear: both;"></div>
             </div>
             */
             });
@@ -2698,23 +2706,23 @@
             var bar = '<span class="btn" action="cancel">X</span>';
             var content = commentToString(function() {
                 /*
-			<p style="margin-bottom: 4px;font-size: 16px;">请在输入框内按下需要的按键设置快捷键：<span id="tips" style="text-align: left; color: #ff81aa; margin-top: 33px; right: 32px; position: absolute;"></span></p>
-			<p>
-			  <input type="text" name="keyName" placeholder="支持单个组合键ctrl，alt，shift" style="width: 574px;height:30px;font-size: 16px;text-align: center;padding:4px 0;border: 1px solid #ccd0d7;border-radius: 4px;" >
-			  <input type="hidden" name="keyCode" >
-			  <input type="hidden" name="typeName" >
-			</p>
-			<p class="tips-box">
-			  <span style="padding: 0 10px;font-weight: bold;">* 请不要在意英文的按键名称。<br/></span>
-			  <span style="padding: 0 10px;font-weight: bold;">* 请关闭输入法后设置。<br/></span>
-			  <span style="padding: 0 10px;font-weight: bold;">* 默认的快捷键（已知的）有：</span><br/><span style="margin-left: 27px; display: inline-block;">空格 （播放/暂停）<br/>方向键上、下 （音量+/音量-）<br/>方向键左、右 （后退/快进） <br/>最好避开这些按键，和浏览器默认的快捷键，脚本没有阻止默认行为。</span>
-			</p>
-			<div class="btns" style="text-align: center;">
+            <p style="margin-bottom: 4px;font-size: 16px;">请在输入框内按下需要的按键设置快捷键：<span id="tips" style="text-align: left; color: #ff81aa; margin-top: 33px; right: 32px; position: absolute;"></span></p>
+            <p>
+              <input type="text" name="keyName" placeholder="支持单个组合键ctrl，alt，shift" style="width: 574px;height:30px;font-size: 16px;text-align: center;padding:4px 0;border: 1px solid #ccd0d7;border-radius: 4px;" >
+              <input type="hidden" name="keyCode" >
+              <input type="hidden" name="typeName" >
+            </p>
+            <p class="tips-box">
+              <span style="padding: 0 10px;font-weight: bold;">* 请不要在意英文的按键名称。<br/></span>
+              <span style="padding: 0 10px;font-weight: bold;">* 请关闭输入法后设置。<br/></span>
+              <span style="padding: 0 10px;font-weight: bold;">* 默认的快捷键（已知的）有：</span><br/><span style="margin-left: 27px; display: inline-block;">空格 （播放/暂停）<br/>方向键上、下 （音量+/音量-）<br/>方向键左、右 （后退/快进） <br/>最好避开这些按键，和浏览器默认的快捷键，脚本没有阻止默认行为。</span>
+            </p>
+            <div class="btns" style="text-align: center;">
                <div class="btn" action="clear">清除此快捷键</div>
                <div class="btn" action="save">设置</div>
                <div class="btn btn-cancel" action="cancel">取消</div>
-			</div>
-			*/
+            </div>
+            */
             });
             var isModal = e.target.offsetParent.offsetParent;
             dialog.create(name, title, bar, content, isModal);
@@ -2838,26 +2846,26 @@
             var bar = '<span class="btn" action="close">X</span>';
             var content = commentToString(function() {
                 /*
-			<p style="margin-bottom: 4px;font-size: 16px;">请选择脚本数据存储类型：<span id="tips" style="text-align: left; color: #ff81aa; margin-top: 33px; right: 22px; position: absolute;"></span></p>
-			<p style="margin: 10px;font-size: 16px; text-align:center;">
-			   <input type="radio" id="extension" name="storageType" value="extension" checked>
-			      <label for="extension">extension（油猴扩展存储）</label>
-			   <input type="radio" id="localStorage" name="storageType" value="localStorage">
-			      <label for="localStorage">localStorage（浏览器存储）</label>
-			</p>
-			<ol class="tips-box" style="padding: 20px 20px 20px 40px;">
-			   <li style="list-style: decimal;"><span style="font-weight: bold;color:red;">如果没有出现“无法保存脚本数据”的情况，请无视这个设置！</span></li>
-			   <li style="list-style: decimal;"><span style="font-weight: bold;">出现“无法保存脚本数据”的情况，请把“存储类型” 更改为 “localStorage（浏览器存储）”</span></li>
-			   <li style="list-style: decimal;"><span style="font-weight: bold;">如果更改为 “localStorage（浏览器存储）” www.bilibili.com 和 bangumi.bilibili.com 的设置不会同步，需要手动重新设置。</span></li>
-			   <li style="list-style: decimal;">使用 Greasemonkey、Tampermonkey 扩展来安装脚本的用户，一般请不要修改，请保持默认的“extension（油猴扩展存储）” 。</li>
-			   <li style="list-style: decimal;">如果更改为 “localStorage（浏览器存储）” 那么删除脚本的时候，脚本设置不会被清除，想清除的话请使用浏览器的“清除浏览数据”功能来清除。</li>
-			   <li style="list-style: decimal;">两种存储类型不会自动同步设置，更换存储类型后请重新设置。</li>
-			</ol>
-			<div class="btns" style="text-align: center;">
+            <p style="margin-bottom: 4px;font-size: 16px;">请选择脚本数据存储类型：<span id="tips" style="text-align: left; color: #ff81aa; margin-top: 33px; right: 22px; position: absolute;"></span></p>
+            <p style="margin: 10px;font-size: 16px; text-align:center;">
+               <input type="radio" id="extension" name="storageType" value="extension" checked>
+                  <label for="extension">extension（油猴扩展存储）</label>
+               <input type="radio" id="localStorage" name="storageType" value="localStorage">
+                  <label for="localStorage">localStorage（浏览器存储）</label>
+            </p>
+            <ol class="tips-box" style="padding: 20px 20px 20px 40px;">
+               <li style="list-style: decimal;"><span style="font-weight: bold;color:red;">如果没有出现“无法保存脚本数据”的情况，请无视这个设置！</span></li>
+               <li style="list-style: decimal;"><span style="font-weight: bold;">出现“无法保存脚本数据”的情况，请把“存储类型” 更改为 “localStorage（浏览器存储）”</span></li>
+               <li style="list-style: decimal;"><span style="font-weight: bold;">如果更改为 “localStorage（浏览器存储）” www.bilibili.com 和 bangumi.bilibili.com 的设置不会同步，需要手动重新设置。</span></li>
+               <li style="list-style: decimal;">使用 Greasemonkey、Tampermonkey 扩展来安装脚本的用户，一般请不要修改，请保持默认的“extension（油猴扩展存储）” 。</li>
+               <li style="list-style: decimal;">如果更改为 “localStorage（浏览器存储）” 那么删除脚本的时候，脚本设置不会被清除，想清除的话请使用浏览器的“清除浏览数据”功能来清除。</li>
+               <li style="list-style: decimal;">两种存储类型不会自动同步设置，更换存储类型后请重新设置。</li>
+            </ol>
+            <div class="btns" style="text-align: center;">
                <div class="btn" action="save">设置</div>
                <div class="btn btn-cancel" action="cancel">取消</div>
-			</div>
-			*/
+            </div>
+            */
             });
             var isModal = e.target.parentNode.parentNode.offsetParent;
             dialog.create(name, title, bar, content, isModal);
@@ -2902,31 +2910,31 @@
             var bar = '<span class="btn" action="close">X</span>';
             var content = commentToString(function() {
                 /*
-			<h2 style="font-weight: bold;font-size: 16px;">小提示：</h2>
-			<ol style="padding: 0 0 0 20px;margin:10px 0;">
-			   <li style="list-style: disc;">播放器调整设置按钮在<span style="font-weight: bold;">页面最右侧。</span></li>
-			   <li style="list-style: disc;">播放器调整设置窗口中，鼠标移动到<span style="font-size: 12px; color: #00a1d6; cursor: pointer;margin:0 10px;"tooltip="查看帮助">[?]</span>上，查看此功能的使用帮助。</li>
-			</ol>
-			<div class="btns" style="text-align: center;"><div class="btn" action="close">关闭</div></div>
-			*/
+            <h2 style="font-weight: bold;font-size: 16px;">小提示：</h2>
+            <ol style="padding: 0 0 0 20px;margin:10px 0;">
+               <li style="list-style: disc;">播放器调整设置按钮在<span style="font-weight: bold;">页面最右侧。</span></li>
+               <li style="list-style: disc;">播放器调整设置窗口中，鼠标移动到<span style="font-size: 12px; color: #00a1d6; cursor: pointer;margin:0 10px;"tooltip="查看帮助">[?]</span>上，查看此功能的使用帮助。</li>
+            </ol>
+            <div class="btns" style="text-align: center;"><div class="btn" action="close">关闭</div></div>
+            */
             });
 
             var player = isPlayer();
             if (player === "flashPlayer") {
                 content = commentToString(function() {
                     /*
-				<h2 style="font-weight: bold;font-size: 16px;">小提示：</h2>
-				<ol style="padding: 0 0 0 20px;margin:10px 0;">
-				   <li style="list-style: disc;"><span style="font-weight: bold;">此脚本现已不再支持 flash 播放器</span></li>
-				   <li style="list-style: disc;"><span style="font-weight: bold;">需要开启“HTML5 播放器”。</span></li>
-				</ol>
-				<h2 style="font-weight: bold;font-size: 16px;">开启“HTML5播放器”步骤：</h2>
-				<ol style="padding: 0 0 0 20px;margin:10px 0;">
-				   <li style="list-style: decimal;">打开<a href="https://www.bilibili.com/blackboard/html5playerhelp.html" rel="nofollow">https://www.bilibili.com/blackboard/html5playerhelp.html</a></li>
-				   <li style="list-style: decimal;">选择试用HTML5播放器</li>
-				</ol>
-				<div class="btns" style="text-align: center;"><div class="btn" action="close">关闭</div></div>
-				*/
+                <h2 style="font-weight: bold;font-size: 16px;">小提示：</h2>
+                <ol style="padding: 0 0 0 20px;margin:10px 0;">
+                   <li style="list-style: disc;"><span style="font-weight: bold;">此脚本现已不再支持 flash 播放器</span></li>
+                   <li style="list-style: disc;"><span style="font-weight: bold;">需要开启“HTML5 播放器”。</span></li>
+                </ol>
+                <h2 style="font-weight: bold;font-size: 16px;">开启“HTML5播放器”步骤：</h2>
+                <ol style="padding: 0 0 0 20px;margin:10px 0;">
+                   <li style="list-style: decimal;">打开<a href="https://www.bilibili.com/blackboard/html5playerhelp.html" rel="nofollow">https://www.bilibili.com/blackboard/html5playerhelp.html</a></li>
+                   <li style="list-style: decimal;">选择试用HTML5播放器</li>
+                </ol>
+                <div class="btns" style="text-align: center;"><div class="btn" action="close">关闭</div></div>
+                */
                 });
             }
             dialog.create(name, title, bar, content);
@@ -2951,69 +2959,69 @@
         if (isExistAdjustPlayerMain === null) { //isExistAdjustPlayerMain === null
             var css = commentToString(function() {
                 /*
-				#adjust-player-config-btn{position:fixed;bottom:243px;right:6px;z-index:10;}
-				#adjust-player-config-btn span{font-size:12px;display:block;padding:6px 0;text-align:center;line-height:17px;background:#fff;border:1px solid #e7e7e7;-webkit-box-shadow:0 6px 10px 0 hsla(0,0%,73%,.3);box-shadow:0 6px 10px 0 hsla(0,0%,73%,.3);border-radius:2px;color:#212121;width:46px;cursor:pointer;transition:color .3s}
-				#adjust-player-config-btn span:hover {color: #00a1d6;border: 1px solid #00a1d6}
-				.float-nav  {bottom:60px!important}
-				.adjust-player-mask{display:none;position:fixed;top:0;left:0;z-index:100001;width:100%;height:100%;background:#000;opacity:.6;filter:alpha(opacity=60)}
-				#adjust-player .title{font-size:16px;color:#222;text-align:center;font-weight:bold;margin-bottom:20px}
-				#adjust-player .dialog{position:fixed;z-index:100002;top:50%;margin-top:-280px;left:50%;width:580px;margin-left:-320px;padding:20px;background-color:rgb(255,255,255);border-radius:6px;box-shadow:1px 1px 40px 0px rgba(0,0,0,0.6);display:block;font-size:14px;line-height:26px}
-				#adjust-player .title span{font-size:12px;color:#fff;background-color:#00a1d6;display:inline-block;width:22px;height:22px;position:absolute;right:25px;border-radius:50%;line-height:22px;transition:.1s;transition-property:background-color;margin-top:2px}
-				#adjust-player .title span:hover{background-color:#00b5e5;cursor:pointer}
-				#adjust-player .title [action="help"]{right:52px}
-				#adjust-player fieldset{border:1px solid #e5e9ef;border-radius:4px;padding:0 6px 6px;background-color:#f4f5f7;margin-bottom:10px}
-				#adjust-player legend{width: unset;font-weight:bold;font-size:14px;margin-left:11px;border:1px solid #e5e9ef;background-color:#fff;padding:0 10px;border-radius:4px}
-				#adjust-player legend label span{color:#6d757a;font-size:12px}
-				#adjust-player input,#adjust-player select,#adjust-player option{-webkit-appearance:unset!important;-moz-appearance:unset!important;appearance:unset!important;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;vertical-align:middle;background-color:#fff;border:1px solid #99a2aa;border-radius:3px}
-				#adjust-player input[type="number"]{-webkit-appearance:textfield!important;-moz-appearance:menulist!important;appearance:textfield!important}
-				#adjust-player input[type="radio"]{-webkit-appearance:radio!important;-moz-appearance:radio!important;appearance:radio!important}
-				#adjust-player select{-webkit-appearance:menulist!important;-moz-appearance:menulist!important;appearance:menulist!important}
-				#adjust-player select,#adjust-player input[type="number"]{text-align-last:center;text-align:center;margin:0 2px;height:22px}
-				#adjust-player input[type="checkbox"]{visibility:hidden;width:14px;height:14px}
-				#adjust-player input[type="checkbox"]  + .checkbox{color:#99a2aa;border:1px solid #99a2aa;display:inline-block;width:14px;height:14px;background-color:#fff;border-radius:2px;content:" ";position:absolute;margin-top:5px;margin-left:-19px}
-				#adjust-player input[type="checkbox"]:checked  + .checkbox::before{visibility:visible;color:#00a1d6;display:inline-block;border:0px;border-radius:2px;font-family:bilibili-iconfont;content:"\E629";font-size:16px;position:absolute;margin-top:-6px;margin-left:-1px}
-				#adjust-player input[type="checkbox"]:checked  + .checkbox{visibility:hidden}
-				#adjust-player input[readOnly="true"]{color:#99a2aa;width:80px;max-width:80px;border:0px;background:#f4f5f7}
-				#adjust-player input[readOnly="true"].hide{ max-width: 47px; border: 1px #ccc solid; text-align-last: center; text-align: center; margin: 0 10px; height: 22px; }
-				#adjust-player [disabled] {color:#99a2aa}
-				#adjust-player .block{padding:5px 0}
-				#adjust-player .block .bold{font-weight:bold}
-				#adjust-player .block label{display:block;margin:2px 0 2px 19px;height:24px}
-				#adjust-player .block label.multiLine {height:auto;}
-				#adjust-player .block label.multiLine .newLine{margin-left:14px}
-				#adjust-player .tipsButton{font-size:12px;color:#00a1d6;cursor:pointer;padding:0 2px}
-				#adjust-player .left{float:left}
-				#adjust-player .right{float:right}
-				#adjust-player .left,#adjust-player .right{width:48%;vertical-align:top}
-				#adjust-player .shortcutsItem{max-width:200px}
-				#adjust-player .info{position:absolute;bottom:20px;border:1px solid #e5e9ef;border-radius:20px;padding:0 10px}
-				#adjust-player .info .ver{font-weight:bold;padding-right:5px;color:#6d757a}
-				#adjust-player a{outline:0;color:#00a1d6;text-decoration:none;cursor:pointer}
-				#adjust-player .btns{text-align:right;width:100%;display:inline-block}
-				#adjust-player .btn{margin:10px 0px 0px 10px;width:100px;height:28px;line-height:28px;font-size:14px;display:inline-block;color:#fff;cursor:pointer;text-align:center;border-radius:4px;background-color:#00a1d6;vertical-align:middle;border:1px solid #00a1d6;transition:.1s;transition-property:background-color,border,color;user-select:none}
-				#adjust-player .btn:hover{color:#fff;background:#00b5e5;border-color:#00b5e5}
-				#adjust-player .btn-cancel{display:inline-block;text-align:center;cursor:pointer;color:#222;border:1px solid #ccd0d7;background-color:#fff;border-radius:4px;transition:.1s;transition-property:background-color,border,color}
-				#adjust-player .btn-cancel:hover{color:#00a1d6;border-color:#00a1d6;background:#fff}
-				#adjust-player .tips-box{color: #99a2aa;border:1px solid #e5e9ef;background-color: #f4f5f7;border-radius: 10px;margin: 10px 0;padding: 20px}
-				#adjust-player form .wrapper{overflow-x:hidden;white-space:nowrap;position:relative}
-				#adjust-player .modalWindow{z-index:100000}
-				#adjust-player .shortcutsItem.disabled > label{color:#99a2aa !important}
-				#adjust-player-tips{width:100%;height:100%;line-height:16px;color:#333;overflow:auto;resize:horizontal;background:linear-gradient(135deg,#E6E7E8 0,#E6E7E8 99%,#fff 95%)}
-				#adjust-player-tips p,#adjust-player-tips-save p{text-align:left}
-				#adjust-player-tips-save .content{position:absolute;top:20px;width:414px;font-size:16px;line-height:24px;padding:20px;background:#fff;border:1px solid #eee;border-radius:4px;z-index:1}
-				#adjust-player-tips-save .content .bold{font-weight:bold;font-size:18px;text-align:center;color:#333;padding-bottom:18px}
-				#adjust-player-tips-save .content .btn{display:inline-block;margin-top:10px;padding:4px 0;width:120px;color:#fff;cursor:pointer;text-align:center;border-radius:4px;background-color:#00a1d6;vertical-align:middle;border:1px solid #00a1d6;transition:.1s;transition-property:background-color,border,color;-webkit-touch-callout:none;-webkit-user-select:none;-khtml-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
-				#adjust-player-tips-save .content .btn:hover{background-color:#00b5e5;border-color:#00b5e5}
-				#adjust-player-tips-save .content .btn.b-btn-cancel{text-align:center;cursor:pointer;color:#222;border:1px solid #ccd0d7;background-color:#fff;border-radius:4px;transition:.1s;transition-property:background-color,border,color}
-				#adjust-player-tips-save .content .btn.b-btn-cancel:hover{color:#00a1d6;border-color:#00a1d6}
-				#adjust-player-tips-save .content .btns{margin-top:10px}
-				#adjust-player-tips-save .box{margin:10px 0;padding:10px;color:#222;border-radius:4px;border:1px solid #ccd0d7}
-				#adjust-player-tips-save .custom-width .btn{display:inline-block;width:auto;padding:0 10px}
-				#adjust-player-tips .info{position:relative;top:10px;margin-left:10px;font-weight:bold;z-index:10}
-				#adjust-player-tips .info span{color:#333;font-size:12px;color:#fb7299}
-				#adjust-player-tips .tips-text{position:absolute;bottom:10px;margin-left:10px;color:#99a2aa}
-				#adjust-player-tips .drag-arrow{position:absolute;right:0}
-			*/
+                #adjust-player-config-btn{position:fixed;bottom:243px;right:6px;z-index:10;}
+                #adjust-player-config-btn span{font-size:12px;display:block;padding:6px 0;text-align:center;line-height:17px;background:#fff;border:1px solid #e7e7e7;-webkit-box-shadow:0 6px 10px 0 hsla(0,0%,73%,.3);box-shadow:0 6px 10px 0 hsla(0,0%,73%,.3);border-radius:2px;color:#212121;width:46px;cursor:pointer;transition:color .3s}
+                #adjust-player-config-btn span:hover {color: #00a1d6;border: 1px solid #00a1d6}
+                .float-nav  {bottom:60px!important}
+                .adjust-player-mask{display:none;position:fixed;top:0;left:0;z-index:100001;width:100%;height:100%;background:#000;opacity:.6;filter:alpha(opacity=60)}
+                #adjust-player .title{font-size:16px;color:#222;text-align:center;font-weight:bold;margin-bottom:20px}
+                #adjust-player .dialog{position:fixed;z-index:100002;top:50%;margin-top:-280px;left:50%;width:580px;margin-left:-320px;padding:20px;background-color:rgb(255,255,255);border-radius:6px;box-shadow:1px 1px 40px 0px rgba(0,0,0,0.6);display:block;font-size:14px;line-height:26px}
+                #adjust-player .title span{font-size:12px;color:#fff;background-color:#00a1d6;display:inline-block;width:22px;height:22px;position:absolute;right:25px;border-radius:50%;line-height:22px;transition:.1s;transition-property:background-color;margin-top:2px}
+                #adjust-player .title span:hover{background-color:#00b5e5;cursor:pointer}
+                #adjust-player .title [action="help"]{right:52px}
+                #adjust-player fieldset{border:1px solid #e5e9ef;border-radius:4px;padding:0 6px 6px;background-color:#f4f5f7;margin-bottom:10px}
+                #adjust-player legend{width: unset;font-weight:bold;font-size:14px;margin-left:11px;border:1px solid #e5e9ef;background-color:#fff;padding:0 10px;border-radius:4px}
+                #adjust-player legend label span{color:#6d757a;font-size:12px}
+                #adjust-player input,#adjust-player select,#adjust-player option{-webkit-appearance:unset!important;-moz-appearance:unset!important;appearance:unset!important;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;vertical-align:middle;background-color:#fff;border:1px solid #99a2aa;border-radius:3px}
+                #adjust-player input[type="number"]{-webkit-appearance:textfield!important;-moz-appearance:menulist!important;appearance:textfield!important}
+                #adjust-player input[type="radio"]{-webkit-appearance:radio!important;-moz-appearance:radio!important;appearance:radio!important}
+                #adjust-player select{-webkit-appearance:menulist!important;-moz-appearance:menulist!important;appearance:menulist!important}
+                #adjust-player select,#adjust-player input[type="number"]{text-align-last:center;text-align:center;margin:0 2px;height:22px}
+                #adjust-player input[type="checkbox"]{visibility:hidden;width:14px;height:14px}
+                #adjust-player input[type="checkbox"]  + .checkbox{color:#99a2aa;border:1px solid #99a2aa;display:inline-block;width:14px;height:14px;background-color:#fff;border-radius:2px;content:" ";position:absolute;margin-top:5px;margin-left:-19px}
+                #adjust-player input[type="checkbox"]:checked  + .checkbox::before{visibility:visible;color:#00a1d6;display:inline-block;border:0px;border-radius:2px;font-family:bilibili-iconfont;content:"\E629";font-size:16px;position:absolute;margin-top:-6px;margin-left:-1px}
+                #adjust-player input[type="checkbox"]:checked  + .checkbox{visibility:hidden}
+                #adjust-player input[readOnly="true"]{color:#99a2aa;width:80px;max-width:80px;border:0px;background:#f4f5f7}
+                #adjust-player input[readOnly="true"].hide{ max-width: 47px; border: 1px #ccc solid; text-align-last: center; text-align: center; margin: 0 10px; height: 22px; }
+                #adjust-player [disabled] {color:#99a2aa}
+                #adjust-player .block{padding:5px 0}
+                #adjust-player .block .bold{font-weight:bold}
+                #adjust-player .block label{display:block;margin:2px 0 2px 19px;height:24px}
+                #adjust-player .block label.multiLine {height:auto;}
+                #adjust-player .block label.multiLine .newLine{margin-left:14px}
+                #adjust-player .tipsButton{font-size:12px;color:#00a1d6;cursor:pointer;padding:0 2px}
+                #adjust-player .left{float:left}
+                #adjust-player .right{float:right}
+                #adjust-player .left,#adjust-player .right{width:48%;vertical-align:top}
+                #adjust-player .shortcutsItem{max-width:200px}
+                #adjust-player .info{position:absolute;bottom:20px;border:1px solid #e5e9ef;border-radius:20px;padding:0 10px}
+                #adjust-player .info .ver{font-weight:bold;padding-right:5px;color:#6d757a}
+                #adjust-player a{outline:0;color:#00a1d6;text-decoration:none;cursor:pointer}
+                #adjust-player .btns{text-align:right;width:100%;display:inline-block}
+                #adjust-player .btn{margin:10px 0px 0px 10px;width:100px;height:28px;line-height:28px;font-size:14px;display:inline-block;color:#fff;cursor:pointer;text-align:center;border-radius:4px;background-color:#00a1d6;vertical-align:middle;border:1px solid #00a1d6;transition:.1s;transition-property:background-color,border,color;user-select:none}
+                #adjust-player .btn:hover{color:#fff;background:#00b5e5;border-color:#00b5e5}
+                #adjust-player .btn-cancel{display:inline-block;text-align:center;cursor:pointer;color:#222;border:1px solid #ccd0d7;background-color:#fff;border-radius:4px;transition:.1s;transition-property:background-color,border,color}
+                #adjust-player .btn-cancel:hover{color:#00a1d6;border-color:#00a1d6;background:#fff}
+                #adjust-player .tips-box{color: #99a2aa;border:1px solid #e5e9ef;background-color: #f4f5f7;border-radius: 10px;margin: 10px 0;padding: 20px}
+                #adjust-player form .wrapper{overflow-x:hidden;white-space:nowrap;position:relative}
+                #adjust-player .modalWindow{z-index:100000}
+                #adjust-player .shortcutsItem.disabled > label{color:#99a2aa !important}
+                #adjust-player-tips{width:100%;height:100%;line-height:16px;color:#333;overflow:auto;resize:horizontal;background:linear-gradient(135deg,#E6E7E8 0,#E6E7E8 99%,#fff 95%)}
+                #adjust-player-tips p,#adjust-player-tips-save p{text-align:left}
+                #adjust-player-tips-save .content{position:absolute;top:20px;width:414px;font-size:16px;line-height:24px;padding:20px;background:#fff;border:1px solid #eee;border-radius:4px;z-index:1}
+                #adjust-player-tips-save .content .bold{font-weight:bold;font-size:18px;text-align:center;color:#333;padding-bottom:18px}
+                #adjust-player-tips-save .content .btn{display:inline-block;margin-top:10px;padding:4px 0;width:120px;color:#fff;cursor:pointer;text-align:center;border-radius:4px;background-color:#00a1d6;vertical-align:middle;border:1px solid #00a1d6;transition:.1s;transition-property:background-color,border,color;-webkit-touch-callout:none;-webkit-user-select:none;-khtml-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
+                #adjust-player-tips-save .content .btn:hover{background-color:#00b5e5;border-color:#00b5e5}
+                #adjust-player-tips-save .content .btn.b-btn-cancel{text-align:center;cursor:pointer;color:#222;border:1px solid #ccd0d7;background-color:#fff;border-radius:4px;transition:.1s;transition-property:background-color,border,color}
+                #adjust-player-tips-save .content .btn.b-btn-cancel:hover{color:#00a1d6;border-color:#00a1d6}
+                #adjust-player-tips-save .content .btns{margin-top:10px}
+                #adjust-player-tips-save .box{margin:10px 0;padding:10px;color:#222;border-radius:4px;border:1px solid #ccd0d7}
+                #adjust-player-tips-save .custom-width .btn{display:inline-block;width:auto;padding:0 10px}
+                #adjust-player-tips .info{position:relative;top:10px;margin-left:10px;font-weight:bold;z-index:10}
+                #adjust-player-tips .info span{color:#333;font-size:12px;color:#fb7299}
+                #adjust-player-tips .tips-text{position:absolute;bottom:10px;margin-left:10px;color:#99a2aa}
+                #adjust-player-tips .drag-arrow{position:absolute;right:0}
+            */
             });
             var styleNode = document.createElement('style');
             styleNode.type = 'text/css';
