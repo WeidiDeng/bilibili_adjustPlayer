@@ -1820,23 +1820,26 @@
             window.adjustPlayerCurrentPListId = pListId;
 
             window.onpopstate = history.onpushstate = function(e) {
+                var isReload = false;
                 var reloadTimer = null;
                 clearTimeout(this.reloadTimer);
                 this.reloadTimer = window.setTimeout(function() {
-                    var newPlistId, oldPListId;
-                    newPlistId = reloadPList.getPListId(location.href);
-                    oldPListId = window.adjustPlayerCurrentPListId;
-                    console.log('reloadPList:\nnewPlistId:' + newPlistId + "\noldPListId:" + oldPListId);
-                    isReload = true;
-                    reloadPList.getScreenMode();
-                    if (typeof GM_getValue === 'function') {
-                        var setting = config.read();
-                        adjustPlayer.reload(setting);
-                    } else {
-                        var setting = config.read();
-                        setting.then(function(value) {
-                            adjustPlayer.reload(value);
-                        });
+                    if (isReload === false) {
+                        var newPlistId, oldPListId;
+                        newPlistId = reloadPList.getPListId(location.href);
+                        oldPListId = window.adjustPlayerCurrentPListId;
+                        console.log('reloadPList:\nnewPlistId:' + newPlistId + "\noldPListId:" + oldPListId);
+                        isReload = true;
+                        reloadPList.getScreenMode();
+                        if (typeof GM_getValue === 'function') {
+                            var setting = config.read();
+                            adjustPlayer.reload(setting);
+                        } else {
+                            var setting = config.read();
+                            setting.then(function(value) {
+                                adjustPlayer.reload(value);
+                            });
+                        }
                     }
                 }, 200);
             }
