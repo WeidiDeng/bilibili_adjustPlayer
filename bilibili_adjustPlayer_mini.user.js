@@ -12,8 +12,7 @@
 // @include     http*://bangumi.bilibili.com/movie/*
 // @exclude     http*://bangumi.bilibili.com/movie/
 // @description 调整B站播放器设置。
-// @version     0.1
-// @grant       unsafeWindow
+// @version     0.2
 // @run-at      document-end
 // ==/UserScript==
 (function() {
@@ -29,7 +28,6 @@
                 var chooseDanmaku = querySelectorFromIframe('.bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch .choose_danmaku');
                 if (chooseDanmaku.innerHTML === "关闭弹幕") {
                     doClick(controlBtn);
-                    console.log("hide danmu");
                 }
             }
         },
@@ -37,6 +35,12 @@
             var controlBtn = querySelectorFromIframe('.bilibili-player-video-control > div[name="ctlbar_danmuku_on"] i');
             if (controlBtn !== null) {
                 doClick(controlBtn);
+            }
+        },
+        hideSendbar: function() {
+            var sendbar = querySelectorFromIframe('.bilibili-player-video-sendbar');
+            if (sendbar !== null) {
+                sendbar.style = "display: none"
             }
         },
         autoNextPlist: function(video) {
@@ -48,7 +52,6 @@
             })
         },
         init: function() {
-            unsafeWindow.adjustPlayerTest = true;
             //修复后台打开视频页面脚本加载失效
             var documentState = document.visibilityState;
             if (documentState === "visible") {
@@ -74,6 +77,7 @@
                                 try {
                                     window.setTimeout(function() {
                                         adjustPlayer.autoNextPlist(video);
+                                        adjustPlayer.hideSendbar();
                                         if (newPlayer) {
                                             adjustPlayer.new_hideDanmuku();
                                         } else {
