@@ -92,7 +92,7 @@
                                     window.setTimeout(function() {
                                         adjustPlayer.autoNextPlist(video);
                                         adjustPlayer.hideExtra(newPlayer);
-                                        adjustPlayer.new_hideDanmuku(newPlayer);
+                                        adjustPlayer.hideDanmuku(newPlayer);
                                     }, 1000);
                                     reloadPList.init();
                                     clearInterval(timer);
