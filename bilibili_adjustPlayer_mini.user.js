@@ -18,29 +18,43 @@
 (function() {
     'use strict';
     var adjustPlayer = {
-        new_hideDanmuku: function() {
-            var controlBtn = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch > input');
-            if (controlBtn !== null) {
+        hideDanmuku: function(newPlayer) {
+            if (newPlayer) {
+                var controlBtn = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch > input');
+                if (controlBtn !== null) {
 
-                createMouseoverAndMouseoutEvent('show', controlBtn);
-                createMouseoverAndMouseoutEvent('hide', controlBtn);
+                    createMouseoverAndMouseoutEvent('show', controlBtn);
+                    createMouseoverAndMouseoutEvent('hide', controlBtn);
 
-                var chooseDanmaku = querySelectorFromIframe('.bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch .choose_danmaku');
-                if (chooseDanmaku.innerHTML === "关闭弹幕") {
+                    var chooseDanmaku = querySelectorFromIframe('.bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch .choose_danmaku');
+                    if (chooseDanmaku.innerHTML === "关闭弹幕") {
+                        doClick(controlBtn);
+                    }
+                }
+            } else {
+                var controlBtn = querySelectorFromIframe('.bilibili-player-video-control > div[name="ctlbar_danmuku_on"] i');
+                if (controlBtn !== null) {
                     doClick(controlBtn);
                 }
             }
         },
-        old_hideDanmuku: function() {
-            var controlBtn = querySelectorFromIframe('.bilibili-player-video-control > div[name="ctlbar_danmuku_on"] i');
-            if (controlBtn !== null) {
-                doClick(controlBtn);
-            }
-        },
-        hideSendbar: function() {
+        hideExtra: function(newPlayer) {
             var sendbar = querySelectorFromIframe('.bilibili-player-video-sendbar');
             if (sendbar !== null) {
-                sendbar.style = "display: none"
+                var css = [
+                    '.bilibili-player-video-sendbar { display: none }'
+                ]
+                if (!newPlayer) {
+                    var message = querySelectorFromIframe('.bilibili-player-video-message')
+                    if (message !== null) {
+                        css.push('.bilibili-player-video-message { display: none }')
+                    }
+                }
+                var node = document.createElement('style');
+                node.type = 'text/css';
+                node.id = 'adjustPlayerAutoHideExtra';
+                node.appendChild(document.createTextNode(css.join('')));
+                querySelectorFromIframe('.player').appendChild(node);
             }
         },
         autoNextPlist: function(video) {
@@ -77,12 +91,8 @@
                                 try {
                                     window.setTimeout(function() {
                                         adjustPlayer.autoNextPlist(video);
-                                        adjustPlayer.hideSendbar();
-                                        if (newPlayer) {
-                                            adjustPlayer.new_hideDanmuku();
-                                        } else {
-                                            adjustPlayer.old_hideDanmuku();
-                                        }
+                                        adjustPlayer.hideExtra(newPlayer);
+                                        adjustPlayer.new_hideDanmuku(newPlayer);
                                     }, 1000);
                                     reloadPList.init();
                                     clearInterval(timer);
