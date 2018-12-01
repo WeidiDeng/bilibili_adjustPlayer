@@ -12,7 +12,7 @@
 // @include     http*://bangumi.bilibili.com/movie/*
 // @exclude     http*://bangumi.bilibili.com/movie/
 // @description 调整B站播放器设置。
-// @version     0.2
+// @version     0.3
 // @run-at      document-end
 // ==/UserScript==
 (function() {
@@ -22,14 +22,7 @@
             if (newPlayer) {
                 var controlBtn = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch > input');
                 if (controlBtn !== null) {
-
-                    createMouseoverAndMouseoutEvent('show', controlBtn);
-                    createMouseoverAndMouseoutEvent('hide', controlBtn);
-
-                    var chooseDanmaku = querySelectorFromIframe('.bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch .choose_danmaku');
-                    if (chooseDanmaku.innerHTML === "关闭弹幕") {
-                        doClick(controlBtn);
-                    }
+                    doClick(controlBtn);
                 }
             } else {
                 var controlBtn = querySelectorFromIframe('.bilibili-player-video-control > div[name="ctlbar_danmuku_on"] i');
@@ -37,6 +30,7 @@
                     doClick(controlBtn);
                 }
             }
+            console.log("hide danmuku");
         },
         hideExtra: function(newPlayer) {
             var sendbar = querySelectorFromIframe('.bilibili-player-video-sendbar');
@@ -90,9 +84,9 @@
                             if (readyState.getAttribute('style') !== null && readyState.getAttribute('style').search("display: none;") !== -1) {
                                 try {
                                     window.setTimeout(function() {
-                                        adjustPlayer.autoNextPlist(video);
-                                        adjustPlayer.hideExtra(newPlayer);
                                         adjustPlayer.hideDanmuku(newPlayer);
+                                        adjustPlayer.hideExtra(newPlayer);
+                                        adjustPlayer.autoNextPlist(video);
                                     }, 1000);
                                     reloadPList.init();
                                     clearInterval(timer);
@@ -118,6 +112,89 @@
                             timerCount = 0;
                             clearInterval(timer);
                             console.log('adjustPlayer:\n html5Player init error: timeout');
+                        }
+                    }
+                }, 800);
+            } else if (documentState === "hidden") {
+                //修复后台打开视频页面脚本加载失效
+                var hidden, visibilityChange;
+                if (typeof document.hidden !== "undefined") {
+                    hidden = "hidden";
+                    visibilityChange = "visibilitychange";
+                } else if (typeof document.msHidden !== "undefined") {
+                    hidden = "msHidden";
+                    visibilityChange = "msvisibilitychange";
+                } else if (typeof document.webkitHidden !== "undefined") {
+                    hidden = "webkitHidden";
+                    visibilityChange = "webkitvisibilitychange";
+                }
+
+                function visibilitychangeEvent() {
+                    if (typeof document.addEventListener === "undefined" || typeof document[hidden] === "undefined") {
+                        console.log("adjustPlayer:\n nonsupport the Page Visibility API.");
+                    } else {
+                        if (document.visibilityState === "visible") {
+                            adjustPlayer.init();
+                            document.removeEventListener(visibilityChange, visibilitychangeEvent, false);
+                        }
+                    }
+                }
+                document.addEventListener(visibilityChange, visibilitychangeEvent, false);
+            } else {
+                console.log("adjustPlayer:\n nonsupport the Page Visibility API.");
+            }
+        },
+        reload: function() {
+            //修复后台打开视频页面脚本加载失效
+            var documentState = document.visibilityState;
+            if (documentState === "visible") {
+                //总计时器
+                var timerCount = 0;
+                var timer = window.setInterval(function callback() {
+                    var player = isPlayer();
+                    if (player === "html5Player") {
+
+                        var stardustPlayer = document.querySelector('#entryOld');
+                        if (stardustPlayer === null) {
+                            var newPlayer = false;
+                            console.log('旧版播放器页面\n');
+                        } else {
+                            var newPlayer = true;
+                            console.log('新版播放器页面\n');
+                        }
+
+                        var readyState = querySelectorFromIframe('.bilibili-player-video-panel');
+                        var video = querySelectorFromIframe('.bilibili-player-video video');
+                        if (video !== null && readyState !== null) {
+                            if (readyState.getAttribute('style') !== null && readyState.getAttribute('style').search("display: none;") !== -1) {
+                                try {
+                                    window.setTimeout(function() {
+                                        adjustPlayer.autoNextPlist(video);
+                                    }, 1000);
+                                    reloadPList.init();
+                                    clearInterval(timer);
+                                    console.log('adjustPlayer:\nhtml5Player reload success');
+                                } catch (e) {
+                                    clearInterval(timer);
+                                    console.log('adjustPlayer:\nhtml5Player reload error\n' + e);
+                                }
+                            }
+                        } else {
+                            //console.log(timerCount);
+                            timerCount++;
+                            if (timerCount >= 120) {
+                                timerCount = 0;
+                                clearInterval(timer);
+                                console.log('adjustPlayer:\n html5Player reload error: not find video');
+                            }
+                        }
+                    } else {
+                        //console.log(timerCount);
+                        timerCount++;
+                        if (timerCount >= 120) {
+                            timerCount = 0;
+                            clearInterval(timer);
+                            console.log('adjustPlayer:\n html5Player reload error: timeout');
                         }
                     }
                 }, 800);
@@ -182,13 +259,14 @@
             window.onpopstate = history.onpushstate = function() {
                 var reloadTimer = null;
                 clearTimeout(this.reloadTimer);
-                this.reloadTimer = window.setTimeout(function() {
-                    var newPlistId, oldPListId;
-                    newPlistId = reloadPList.getPListId(location.href);
-                    oldPListId = window.adjustPlayerCurrentPListId;
-                    console.log('reloadPList:\nnewPlistId:' + newPlistId + "\noldPListId:" + oldPListId);
-                    adjustPlayer.init();
-                }, 200);
+                this.reloadTimer =
+                    window.setTimeout(function() {
+                        var newPlistId, oldPListId;
+                        newPlistId = reloadPList.getPListId(location.href);
+                        oldPListId = window.adjustPlayerCurrentPListId;
+                        console.log('reloadPList:\nnewPlistId:' + newPlistId + "\noldPListId:" + oldPListId);
+                        adjustPlayer.reload();
+                    }, 200);
             }
         }
     };
@@ -208,25 +286,6 @@
             return "html5Player";
         } else {
             return "unknownPlayer";
-        }
-    };
-
-    function createMouseoverAndMouseoutEvent(type, element) {
-        if (typeof type !== 'undefined' && typeof element !== 'undefined') {
-            return new Promise(function(resolve, reject) {
-                var createEvent = function(type) {
-                    var evt = document.createEvent('Event');
-                    if (type === "show") {
-                        evt.initEvent('mouseover', true, true);
-                        element.dispatchEvent(evt);
-                    } else if (type === "hide") {
-                        evt.initEvent('mouseout', true, true);
-                        element.dispatchEvent(evt);
-                    }
-                };
-                createEvent(type);
-                resolve(type);
-            });
         }
     };
 
