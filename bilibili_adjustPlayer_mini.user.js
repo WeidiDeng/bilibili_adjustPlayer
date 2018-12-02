@@ -22,13 +22,20 @@
             if (newPlayer) {
                 var controlBtn = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch > input');
                 if (controlBtn !== null) {
-                    doClick(controlBtn);
+                    var state = window.getComputedStyle(querySelectorFromIframe(".bui-switch .bui-dot")).color
+                    if (state === "rgb(0, 161, 214)") {
+                        doClick(controlBtn);
+                        return true;
+                    }
                 }
+                return false;
             } else {
                 var controlBtn = querySelectorFromIframe('.bilibili-player-video-control > div[name="ctlbar_danmuku_on"] i');
                 if (controlBtn !== null) {
                     doClick(controlBtn);
+                    return true;
                 }
+                return false;
             }
             console.log("hide danmuku");
         },
@@ -84,8 +91,9 @@
                             if (readyState.getAttribute('style') !== null && readyState.getAttribute('style').search("display: none;") !== -1) {
                                 try {
                                     window.setTimeout(function() {
-                                        adjustPlayer.hideDanmuku(newPlayer);
-                                        adjustPlayer.hideExtra(newPlayer);
+                                        if (adjustPlayer.hideDanmuku(newPlayer)) {
+                                            adjustPlayer.hideExtra(newPlayer);
+                                        }
                                         adjustPlayer.autoNextPlist(video);
                                     }, 1000);
                                     reloadPList.init();
@@ -143,92 +151,6 @@
             } else {
                 console.log("adjustPlayer:\n nonsupport the Page Visibility API.");
             }
-        },
-        reload: function() {
-            //修复后台打开视频页面脚本加载失效
-            var documentState = document.visibilityState;
-            if (documentState === "visible") {
-                //总计时器
-                var timerCount = 0;
-                var timer = window.setInterval(function callback() {
-                    var player = isPlayer();
-                    if (player === "html5Player") {
-
-                        var stardustPlayer = document.querySelector('#entryOld');
-                        if (stardustPlayer === null) {
-                            var newPlayer = false;
-                            console.log('旧版播放器页面\n');
-                        } else {
-                            var newPlayer = true;
-                            console.log('新版播放器页面\n');
-                        }
-
-                        var readyState = querySelectorFromIframe('.bilibili-player-video-panel');
-                        var video = querySelectorFromIframe('.bilibili-player-video video');
-                        if (video !== null && readyState !== null) {
-                            if (readyState.getAttribute('style') !== null && readyState.getAttribute('style').search("display: none;") !== -1) {
-                                try {
-                                    window.setTimeout(function() {
-                                        adjustPlayer.autoNextPlist(video);
-                                    }, 1000);
-                                    reloadPList.init();
-                                    clearInterval(timer);
-                                    console.log('adjustPlayer:\nhtml5Player reload success');
-                                } catch (e) {
-                                    clearInterval(timer);
-                                    console.log('adjustPlayer:\nhtml5Player reload error\n' + e);
-                                }
-                            }
-                        } else {
-                            //console.log(timerCount);
-                            timerCount++;
-                            if (timerCount >= 120) {
-                                timerCount = 0;
-                                clearInterval(timer);
-                                console.log('adjustPlayer:\n html5Player reload error: not find video');
-                            }
-                        }
-                    } else {
-                        //console.log(timerCount);
-                        timerCount++;
-                        if (timerCount >= 120) {
-                            timerCount = 0;
-                            clearInterval(timer);
-                            console.log('adjustPlayer:\n html5Player reload error: timeout');
-                        }
-                    }
-                }, 800);
-            } else if (documentState === "hidden") {
-                //修复后台打开视频页面脚本加载失效
-                var hidden, visibilityChange;
-                if (typeof document.hidden !== "undefined") {
-                    hidden = "hidden";
-                    visibilityChange = "visibilitychange";
-                } else if (typeof document.msHidden !== "undefined") {
-                    hidden = "msHidden";
-                    visibilityChange = "msvisibilitychange";
-                } else if (typeof document.webkitHidden !== "undefined") {
-                    hidden = "webkitHidden";
-                    visibilityChange = "webkitvisibilitychange";
-                }
-
-                function visibilitychangeEvent() {
-                    if (typeof document.addEventListener === "undefined" || typeof document[hidden] === "undefined") {
-                        console.log("adjustPlayer:\n nonsupport the Page Visibility API.");
-                    } else {
-                        if (document.visibilityState === "visible") {
-                            adjustPlayer.init();
-                            document.removeEventListener(visibilityChange, visibilitychangeEvent, false);
-                        }
-                    }
-                }
-                document.addEventListener(visibilityChange, visibilitychangeEvent, false);
-            } else {
-                console.log("adjustPlayer:\n nonsupport the Page Visibility API.");
-            }
-        },
-        onHold: function() {
-            reloadPList.init();
         }
     };
 
@@ -240,7 +162,7 @@
                 if (id !== null) {
                     id = id[0].replace(/\D/g, '');
                 } else {
-                    id = 'none';
+                    id = '';
                 }
             }
             return id;
@@ -266,16 +188,8 @@
                     var newPlistId, oldPListId;
                     newPlistId = reloadPList.getPListId(location.href);
                     oldPListId = window.adjustPlayerCurrentPListId;
-                    if (newPlistId === 'none') {
-                        console.log("Pause");
-                        adjustPlayer.onHold();
-                    } else if (oldPListId === 'none') {
-                        console.log("Restart");
-                        adjustPlayer.init();
-                    } else {
-                        console.log('reloadPList:\nnewPlistId:' + newPlistId + "\noldPListId:" + oldPListId);
-                        adjustPlayer.reload();
-                    }
+                    console.log('reloadPList:\nnewPlistId:' + newPlistId + "\noldPListId:" + oldPListId);
+                    adjustPlayer.init();
                 }, 200);
             }
         }
