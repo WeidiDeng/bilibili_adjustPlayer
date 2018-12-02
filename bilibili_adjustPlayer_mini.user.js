@@ -12,7 +12,7 @@
 // @include     http*://bangumi.bilibili.com/movie/*
 // @exclude     http*://bangumi.bilibili.com/movie/
 // @description 调整B站播放器设置。
-// @version     0.3
+// @version     0.4
 // @run-at      document-end
 // ==/UserScript==
 (function() {
@@ -226,6 +226,9 @@
             } else {
                 console.log("adjustPlayer:\n nonsupport the Page Visibility API.");
             }
+        },
+        onHold: function() {
+            reloadPList.init();
         }
     };
 
@@ -237,7 +240,7 @@
                 if (id !== null) {
                     id = id[0].replace(/\D/g, '');
                 } else {
-                    id = '';
+                    id = 'none';
                 }
             }
             return id;
@@ -259,14 +262,21 @@
             window.onpopstate = history.onpushstate = function() {
                 var reloadTimer = null;
                 clearTimeout(this.reloadTimer);
-                this.reloadTimer =
-                    window.setTimeout(function() {
-                        var newPlistId, oldPListId;
-                        newPlistId = reloadPList.getPListId(location.href);
-                        oldPListId = window.adjustPlayerCurrentPListId;
+                this.reloadTimer = window.setTimeout(function() {
+                    var newPlistId, oldPListId;
+                    newPlistId = reloadPList.getPListId(location.href);
+                    oldPListId = window.adjustPlayerCurrentPListId;
+                    if (newPlistId === 'none') {
+                        console.log("Pause");
+                        adjustPlayer.onHold();
+                    } else if (oldPListId === 'none') {
+                        console.log("Restart");
+                        adjustPlayer.init();
+                    } else {
                         console.log('reloadPList:\nnewPlistId:' + newPlistId + "\noldPListId:" + oldPListId);
                         adjustPlayer.reload();
-                    }, 200);
+                    }
+                }, 200);
             }
         }
     };
