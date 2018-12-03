@@ -120,7 +120,7 @@
                 var nextBtn = querySelectorFromIframe('.bilibili-player-video-btn-next');
                 if (nextBtn !== null) {
                     if (adjustPlayer.checkLoop(newPlayer)) {
-                        adjustPlayer.init();
+                        return;
                     }
                     if (adjustPlayer.checkNoNextP(newPlayer)) {
                         return;
