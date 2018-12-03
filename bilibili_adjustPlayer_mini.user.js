@@ -32,7 +32,7 @@
         checkLoop: function(newPlayer) {
             if (newPlayer) {
                 var loopBtn = querySelectorFromIframe('.bilibili-player-video-btn-repeat');
-                if (!controlBtn.classList.contains("closed")) {
+                if (!loopBtn.classList.contains("closed")) {
                     return true;
                 }
                 return false;
