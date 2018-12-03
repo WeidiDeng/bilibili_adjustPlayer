@@ -29,6 +29,21 @@
     })(window.history);
 
     var adjustPlayer = {
+        checkLoop: function(newPlayer) {
+            if (newPlayer) {
+                var loopBtn = querySelectorFromIframe('.bilibili-player-video-btn-repeat');
+                if (!controlBtn.classList.contains("closed")) {
+                    return true;
+                }
+                return false;
+            } else {
+                var loopBtn = querySelectorFromIframe('.bilibili-player-video-btn-repeat > i');
+                if (loopBtn.getAttribute('data-text') === "关闭洗脑循环") {
+                    return true;
+                }
+                return false;
+            }
+        },
         checkNoNextP: function(newPlayer) {
             if (newPlayer) {
                 var aLabel = document.getElementsByClassName('bui-radio-label');
@@ -104,6 +119,9 @@
             video.addEventListener("ended", function() {
                 var nextBtn = querySelectorFromIframe('.bilibili-player-video-btn-next');
                 if (nextBtn !== null) {
+                    if (adjustPlayer.checkLoop(newPlayer)) {
+                        adjustPlayer.init();
+                    }
                     if (adjustPlayer.checkNoNextP(newPlayer)) {
                         return;
                     }
