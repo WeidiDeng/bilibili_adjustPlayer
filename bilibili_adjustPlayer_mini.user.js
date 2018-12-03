@@ -12,12 +12,50 @@
 // @include     http*://bangumi.bilibili.com/movie/*
 // @exclude     http*://bangumi.bilibili.com/movie/
 // @description 调整B站播放器设置。
-// @version     0.4
+// @version     0.6
 // @run-at      document-end
 // ==/UserScript==
 (function() {
     'use strict';
+    //设置onpushstate事件
+    (function(history) {
+        var pushState = history.pushState;
+        history.pushState = function(state) {
+            if (typeof history.onpushstate == "function") {
+                history.onpushstate({ state: state });
+            }
+            return pushState.apply(history, arguments);
+        };
+    })(window.history);
+
     var adjustPlayer = {
+        checkNoNextP: function(newPlayer) {
+            if (newPlayer) {
+                var aLabel = document.getElementsByClassName('bui-radio-label');
+                var i = null;
+                for (i = 0; i < aLabel.length; i++) {
+                    if (aLabel[i].innerText.includes("播完暂停")) {
+                        var noNext = aLabel[i];
+                        if (window.getComputedStyle(noNext).backgroundColor === "rgb(0, 161, 214)") {
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+            } else {
+                var aLabel = document.getElementsByClassName('button bpui-button-text-only');
+                var i = null;
+                for (i = 0; i < aLabel.length; i++) {
+                    if (aLabel[i].innerText === "自动换P") {
+                        var noNext = aLabel[i];
+                        if (noNext.className === "button bpui-button-text-only") {
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+            }
+        },
         hideDanmuku: function(newPlayer) {
             if (newPlayer) {
                 var controlBtn = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch > input');
@@ -62,11 +100,22 @@
                 querySelectorFromIframe('.player').appendChild(node);
             }
         },
-        autoNextPlist: function(video) {
+        autoNextPlist: function(newPlayer, video) {
             video.addEventListener("ended", function() {
                 var nextBtn = querySelectorFromIframe('.bilibili-player-video-btn-next');
                 if (nextBtn !== null) {
-                    doClick(nextBtn);
+                    if (adjustPlayer.checkNoNextP(newPlayer)) {
+                        return;
+                    }
+                    var nextTimer = null;
+                    this.nextTimer = window.setTimeout(function() {
+                        doClick(nextBtn);
+                    }, 1000);
+
+                    window.onpopstate = history.onpushstate = function() {
+                        clearTimeout(this.nextTimer);
+                        adjustPlayer.init();
+                    }
                 }
             })
         },
@@ -98,9 +147,8 @@
                                         if (adjustPlayer.hideDanmuku(newPlayer)) {
                                             adjustPlayer.hideExtra(newPlayer);
                                         }
-                                        adjustPlayer.autoNextPlist(video);
+                                        adjustPlayer.autoNextPlist(newPlayer, video);
                                     }, 1000);
-                                    reloadPList.init();
                                     clearInterval(timer);
                                     console.log('adjustPlayer:\nhtml5Player init success');
                                 } catch (e) {
@@ -154,28 +202,6 @@
                 document.addEventListener(visibilityChange, visibilitychangeEvent, false);
             } else {
                 console.log("adjustPlayer:\n nonsupport the Page Visibility API.");
-            }
-        }
-    };
-
-    var reloadPList = {
-        init: function() {
-            (function(history) {
-                var pushState = history.pushState;
-                history.pushState = function(state) {
-                    if (typeof history.onpushstate == "function") {
-                        history.onpushstate({ state: state });
-                    }
-                    return pushState.apply(history, arguments);
-                };
-            })(window.history);
-
-            window.onpopstate = history.onpushstate = function() {
-                var reloadTimer = null;
-                clearTimeout(this.reloadTimer);
-                this.reloadTimer = window.setTimeout(function() {
-                    adjustPlayer.init();
-                }, 200);
             }
         }
     };
