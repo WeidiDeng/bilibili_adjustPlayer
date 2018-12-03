@@ -22,8 +22,8 @@
             if (newPlayer) {
                 var controlBtn = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch > input');
                 if (controlBtn !== null) {
-                    var state = window.getComputedStyle(querySelectorFromIframe(".bui-switch .bui-dot")).color
-                    if (state === "rgb(0, 161, 214)") {
+                    var danmukuState = window.getComputedStyle(querySelectorFromIframe(".bui-switch .bui-dot")).color
+                    if (danmukuState === "rgb(0, 161, 214)") {
                         doClick(controlBtn);
                         return true;
                     }
@@ -44,11 +44,16 @@
             if (sendbar !== null) {
                 var css = [
                     '.bilibili-player-video-sendbar { display: none }'
-                ]
-                if (!newPlayer) {
-                    var message = querySelectorFromIframe('.bilibili-player-video-message')
+                ];
+                if (newPlayer) {
+                    var feedback = querySelectorFromIframe('.bilibili-player .bilibili-player-area .bilibili-player-video-wrap .bilibili-player-video-top-issue');
+                    if (feedback !== null) {
+                        css.push('.bilibili-player .bilibili-player-area .bilibili-player-video-wrap .bilibili-player-video-top-issue { display: none }');
+                    }
+                } else {
+                    var message = querySelectorFromIframe('.bilibili-player-video-message');
                     if (message !== null) {
-                        css.push('.bilibili-player-video-message { display: none }')
+                        css.push('.bilibili-player-video-message { display: none }');
                     }
                 }
                 var node = document.createElement('style');
@@ -155,18 +160,6 @@
     };
 
     var reloadPList = {
-        getPListId: function(href) {
-            var id;
-            if (typeof href !== 'undefined') {
-                id = href.match(/p=\d*/g) || href.match(/#page=\d*/g) || href.match(/ep\d*/g) || href.match(/ss\d*#\d*/g) || href.match(/watchlater\/#\/av\d*\/p\d*/g) || href.match(/av\d*/g);
-                if (id !== null) {
-                    id = id[0].replace(/\D/g, '');
-                } else {
-                    id = '';
-                }
-            }
-            return id;
-        },
         init: function() {
             (function(history) {
                 var pushState = history.pushState;
@@ -178,17 +171,10 @@
                 };
             })(window.history);
 
-            var pListId = reloadPList.getPListId(location.href);
-            window.adjustPlayerCurrentPListId = pListId;
-
             window.onpopstate = history.onpushstate = function() {
                 var reloadTimer = null;
                 clearTimeout(this.reloadTimer);
                 this.reloadTimer = window.setTimeout(function() {
-                    var newPlistId, oldPListId;
-                    newPlistId = reloadPList.getPListId(location.href);
-                    oldPListId = window.adjustPlayerCurrentPListId;
-                    console.log('reloadPList:\nnewPlistId:' + newPlistId + "\noldPListId:" + oldPListId);
                     adjustPlayer.init();
                 }, 200);
             }
