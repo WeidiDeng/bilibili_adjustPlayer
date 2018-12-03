@@ -37,7 +37,6 @@
                 }
                 return false;
             }
-            console.log("hide danmuku");
         },
         hideExtra: function(newPlayer) {
             var sendbar = querySelectorFromIframe('.bilibili-player-video-sendbar');
