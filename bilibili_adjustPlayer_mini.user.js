@@ -12,7 +12,7 @@
 // @include     http*://bangumi.bilibili.com/movie/*
 // @exclude     http*://bangumi.bilibili.com/movie/
 // @description 调整B站播放器设置。
-// @version     0.7
+// @version     0.71
 // @run-at      document-end
 // ==/UserScript==
 (function() {
@@ -33,14 +33,14 @@
                 return false;
             }
         },
-        checkNoNextP: function(newPlayer) {
+        checkAutoNextP: function(newPlayer) {
             if (newPlayer) {
                 var aLabel = document.getElementsByClassName('bui-radio-label');
                 var i = null;
                 for (i = 0; i < aLabel.length; i++) {
-                    if (aLabel[i].innerText.includes("播完暂停")) {
-                        var noNext = aLabel[i];
-                        if (window.getComputedStyle(noNext).backgroundColor === "rgb(0, 161, 214)") {
+                    if (aLabel[i].innerText.includes("自动切P")) {
+                        var autoNext = aLabel[i];
+                        if (window.getComputedStyle(autoNext).backgroundColor === "rgb(0, 161, 214)") {
                             return true;
                         }
                         return false;
@@ -51,8 +51,8 @@
                 var i = null;
                 for (i = 0; i < aLabel.length; i++) {
                     if (aLabel[i].innerText === "自动换P") {
-                        var noNext = aLabel[i];
-                        if (noNext.className === "button bpui-button-text-only") {
+                        var autoNext = aLabel[i];
+                        if (autoNext.className === "button bpui-button-text-only bpui-state-active") {
                             return true;
                         }
                         return false;
@@ -68,7 +68,7 @@
                     if (aLabel[i].innerText.includes("默认")) {
                         var defaultNextP = aLabel[i];
                         if (window.getComputedStyle(defaultNextP).backgroundColor !== "rgb(0, 161, 214)") {
-                            doClick(aLabel[i]);
+                            doClick(defaultNextP);
                         }
                         return;
                     }
@@ -85,6 +85,35 @@
                         return;
                     }
                 }
+            }
+        },
+        setAutotNextP: function(newPlayer) {
+            if (newPlayer) {
+                var aLabel = document.getElementsByClassName('bui-radio-label');
+                var i = null;
+                for (i = 0; i < aLabel.length; i++) {
+                    if (aLabel[i].innerText.includes("自动切P")) {
+                        var autoNextP = aLabel[i];
+                        if (window.getComputedStyle(autoNextP).backgroundColor !== "rgb(0, 161, 214)") {
+                            doClick(autoNextP);
+                        }
+                        return true;
+                    }
+                }
+                return false;
+            } else {
+                var aLabel = document.getElementsByClassName('button bpui-button-text-only');
+                var i = null;
+                for (i = 0; i < aLabel.length; i++) {
+                    if (aLabel[i].innerText === "自动换P") {
+                        var autoNextP = aLabel[i];
+                        while (autoNextP.className !== "button bpui-button-text-only bpui-state-active") {
+                            doClick(autoNextP);
+                        }
+                        return true;
+                    }
+                }
+                return false;
             }
         },
         hideDanmuku: function(newPlayer) {
@@ -138,9 +167,10 @@
                     if (adjustPlayer.checkLoop(newPlayer)) {
                         return;
                     }
-                    if (adjustPlayer.checkNoNextP(newPlayer)) {
+                    if (!adjustPlayer.checkAutoNextP(newPlayer)) {
                         return;
                     }
+                    sessionStorage.setItem("autoNextP", "true");
                     adjustPlayer.setDefaultNextP(newPlayer);
                     doClick(nextBtn);
                 }
@@ -175,8 +205,18 @@
                                             adjustPlayer.hideExtra(newPlayer);
                                         }
                                         adjustPlayer.autoNextPlist(newPlayer, video);
-                                        adjustPlayer.reload();
                                     }, 1000);
+
+                                    if (sessionStorage.getItem("autoNextP") === "true") {
+                                        sessionStorage.setItem("autoNextP", "false");
+                                        var restoreTimer = window.setInterval(function() {
+                                            adjustPlayer.setAutotNextP(newPlayer);
+                                            if (adjustPlayer.setAutotNextP(newPlayer)) {
+                                                clearInterval(restoreTimer);
+                                            }
+                                        }, 800);
+                                    }
+
                                     clearInterval(timer);
                                     console.log('adjustPlayer:\nhtml5Player init success');
                                 } catch (e) {
@@ -231,22 +271,6 @@
             } else {
                 console.log("adjustPlayer:\n nonsupport the Page Visibility API.");
             }
-        },
-        reload: function() {
-            //设置onpushstate事件
-            (function(history) {
-                var pushState = history.pushState;
-                history.pushState = function(state) {
-                    if (typeof history.onpushstate == "function") {
-                        history.onpushstate({ state: state });
-                    }
-                    return pushState.apply(history, arguments);
-                };
-            })(window.history);
-
-            window.onpopstate = history.onpushstate = function() {
-                adjustPlayer.init();
-            }
         }
     };
 
@@ -281,4 +305,19 @@
     };
 
     adjustPlayer.init();
+
+    //设置onpushstate事件
+    (function(history) {
+        var pushState = history.pushState;
+        history.pushState = function(state) {
+            if (typeof history.onpushstate == "function") {
+                history.onpushstate({ state: state });
+            }
+            return pushState.apply(history, arguments);
+        };
+    })(window.history);
+
+    window.onpopstate = history.onpushstate = function() {
+        adjustPlayer.init();
+    }
 })();
