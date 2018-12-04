@@ -154,10 +154,6 @@
                     }
                     adjustPlayer.setDefaultNextP(newPlayer);
                     doClick(nextBtn);
-
-                    window.onpopstate = history.onpushstate = function() {
-                        adjustPlayer.init();
-                    }
                 }
             })
         },
@@ -190,6 +186,7 @@
                                             adjustPlayer.hideExtra(newPlayer);
                                         }
                                         adjustPlayer.autoNextPlist(newPlayer, video);
+                                        reloadPList.init();
                                     }, 1000);
                                     clearInterval(timer);
                                     console.log('adjustPlayer:\nhtml5Player init success');
@@ -244,6 +241,33 @@
                 document.addEventListener(visibilityChange, visibilitychangeEvent, false);
             } else {
                 console.log("adjustPlayer:\n nonsupport the Page Visibility API.");
+            }
+        }
+    };
+
+    var reloadPList = {
+        getPListId: function(href) {
+            var id;
+            if (typeof href !== 'undefined') {
+                id = href.match(/p=\d*/g) || href.match(/#page=\d*/g) || href.match(/ep\d*/g) || href.match(/ss\d*#\d*/g) || href.match(/watchlater\/#\/av\d*\/p\d*/g) || href.match(/av\d*/g);
+                if (id !== null) {
+                    id = id[0].replace(/\D/g, '');
+                } else {
+                    id = '';
+                }
+            }
+            return id;
+        },
+        init: function() {
+            var pListId = reloadPList.getPListId(location.href);
+            window.adjustPlayerCurrentPListId = pListId;
+
+            window.onpopstate = history.onpushstate = function() {
+                var newPlistId, oldPListId;
+                newPlistId = reloadPList.getPListId(location.href);
+                oldPListId = window.adjustPlayerCurrentPListId;
+                console.log('reloadPList:\nnewPlistId:' + newPlistId + "\noldPListId:" + oldPListId);
+                adjustPlayer.init();
             }
         }
     };
