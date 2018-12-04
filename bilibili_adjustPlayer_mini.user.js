@@ -17,17 +17,6 @@
 // ==/UserScript==
 (function() {
     'use strict';
-    //设置onpushstate事件
-    (function(history) {
-        var pushState = history.pushState;
-        history.pushState = function(state) {
-            if (typeof history.onpushstate == "function") {
-                history.onpushstate({ state: state });
-            }
-            return pushState.apply(history, arguments);
-        };
-    })(window.history);
-
     var adjustPlayer = {
         checkLoop: function(newPlayer) {
             if (newPlayer) {
@@ -244,6 +233,17 @@
             }
         },
         reload: function() {
+            //设置onpushstate事件
+            (function(history) {
+                var pushState = history.pushState;
+                history.pushState = function(state) {
+                    if (typeof history.onpushstate == "function") {
+                        history.onpushstate({ state: state });
+                    }
+                    return pushState.apply(history, arguments);
+                };
+            })(window.history);
+
             window.onpopstate = history.onpushstate = function() {
                 adjustPlayer.init();
             }
