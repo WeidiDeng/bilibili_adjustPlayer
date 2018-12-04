@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        哔哩哔哩（bilibili.com）播放器调整Mini
+// @name        哔哩哔哩（bilibili.com）播放器调整mini
 // @namespace   Weidi Deng
 // @author      Weidi Deng
 // @license     GPL-3.0-or-later
@@ -12,7 +12,7 @@
 // @include     http*://bangumi.bilibili.com/movie/*
 // @exclude     http*://bangumi.bilibili.com/movie/
 // @description 调整B站播放器设置。
-// @version     0.6
+// @version     0.7
 // @run-at      document-end
 // ==/UserScript==
 (function() {
@@ -71,6 +71,34 @@
                 }
             }
         },
+        setDefaultNextP: function(newPlayer) {
+            if (newPlayer) {
+                var aLabel = document.getElementsByClassName('bui-radio-label');
+                var i = null;
+                for (i = 0; i < aLabel.length; i++) {
+                    if (aLabel[i].innerText.includes("默认")) {
+                        var defaultNextP = aLabel[i];
+                        if (window.getComputedStyle(defaultNextP).backgroundColor !== "rgb(0, 161, 214)") {
+                            doClick(aLabel[i]);
+                        }
+                        return;
+                    }
+                }
+
+            } else {
+                var aLabel = document.getElementsByClassName('button bpui-button-text-only');
+                var i = null;
+                for (i = 0; i < aLabel.length; i++) {
+                    if (aLabel[i].innerText === "自动换P") {
+                        var defaultNextP = aLabel[i];
+                        while (defaultNextP.className !== "button bpui-button-text-only bpui-state-indeterminate") {
+                            doClick(defaultNextP);
+                        }
+                        return;
+                    }
+                }
+            }
+        },
         hideDanmuku: function(newPlayer) {
             if (newPlayer) {
                 var controlBtn = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch > input');
@@ -125,13 +153,10 @@
                     if (adjustPlayer.checkNoNextP(newPlayer)) {
                         return;
                     }
-                    var nextTimer = null;
-                    this.nextTimer = window.setTimeout(function() {
-                        doClick(nextBtn);
-                    }, 1000);
+                    adjustPlayer.setDefaultNextP(newPlayer);
+                    doClick(nextBtn);
 
                     window.onpopstate = history.onpushstate = function() {
-                        clearTimeout(this.nextTimer);
                         adjustPlayer.init();
                     }
                 }
