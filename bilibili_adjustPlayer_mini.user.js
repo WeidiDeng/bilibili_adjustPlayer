@@ -84,7 +84,6 @@
                         return;
                     }
                 }
-
             } else {
                 var aLabel = document.getElementsByClassName('button bpui-button-text-only');
                 var i = null;
