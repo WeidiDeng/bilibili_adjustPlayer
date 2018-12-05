@@ -37,7 +37,7 @@
             if (newPlayer) {
                 var controlBtn = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch > input');
                 if (controlBtn !== null) {
-                    var danmukuState = window.getComputedStyle(querySelectorFromIframe(".bui-switch .bui-dot")).color
+                    var danmukuState = window.getComputedStyle(querySelectorFromIframe(".bui-switch .bui-dot")).color;
                     if (danmukuState === "rgb(0, 161, 214)") {
                         doClick(controlBtn);
                         return true;
@@ -66,7 +66,7 @@
                         css.push('.bilibili-player .bilibili-player-area .bilibili-player-video-wrap .bilibili-player-video-top-issue { display: none }');
                     }
                     if (setting !== null) {
-                        css.push('.bilibili-player .bilibili-player-area .bilibili-player-video-control .bilibili-player-video-btn.bilibili-player-video-btn-setting { display: none }')
+                        css.push('.bilibili-player .bilibili-player-area .bilibili-player-video-control .bilibili-player-video-btn.bilibili-player-video-btn-setting { display: none }');
                     }
                 } else {
                     var message = querySelectorFromIframe('.bilibili-player-video-message');
@@ -75,7 +75,7 @@
                         css.push('.bilibili-player-video-message { display: none }');
                     }
                     if (setting !== null) {
-                        css.push('.bilibili-player-setting-btn { display: none }')
+                        css.push('.bilibili-player-setting-btn { display: none }');
                     }
                 }
                 var node = document.createElement('style');
