@@ -12,7 +12,7 @@
 // @include     http*://bangumi.bilibili.com/movie/*
 // @exclude     http*://bangumi.bilibili.com/movie/
 // @description 调整B站播放器设置。
-// @version     0.72
+// @version     0.73
 // @run-at      document-end
 // ==/UserScript==
 (function() {
@@ -61,13 +61,21 @@
                 ];
                 if (newPlayer) {
                     var feedback = querySelectorFromIframe('.bilibili-player .bilibili-player-area .bilibili-player-video-wrap .bilibili-player-video-top-issue');
+                    var setting = querySelectorFromIframe('.bilibili-player-video-btn-setting');
                     if (feedback !== null) {
                         css.push('.bilibili-player .bilibili-player-area .bilibili-player-video-wrap .bilibili-player-video-top-issue { display: none }');
                     }
+                    if (setting !== null) {
+                        css.push('.bilibili-player-video-btn-setting { display: none }')
+                    }
                 } else {
                     var message = querySelectorFromIframe('.bilibili-player-video-message');
+                    var setting = querySelectorFromIframe('.bilibili-player-setting-btn');
                     if (message !== null) {
                         css.push('.bilibili-player-video-message { display: none }');
+                    }
+                    if (setting !== null) {
+                        css.push('.bilibili-player-setting-btn { display: none }')
                     }
                 }
                 var node = document.createElement('style');
