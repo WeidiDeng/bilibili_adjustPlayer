@@ -18,21 +18,6 @@
 (function() {
     'use strict';
     var adjustPlayer = {
-        checkLoop: function(newPlayer) {
-            if (newPlayer) {
-                var loopBtn = querySelectorFromIframe('.bilibili-player-video-btn-repeat');
-                if (!loopBtn.classList.contains("closed")) {
-                    return true;
-                }
-                return false;
-            } else {
-                var loopBtn = querySelectorFromIframe('.bilibili-player-video-btn-repeat > i');
-                if (loopBtn.getAttribute('data-text') === "关闭洗脑循环") {
-                    return true;
-                }
-                return false;
-            }
-        },
         hideDanmuku: function(newPlayer) {
             if (newPlayer) {
                 var controlBtn = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch > input');
@@ -77,17 +62,6 @@
                 querySelectorFromIframe('.player').appendChild(node);
             }
         },
-        autoNextPlist: function(newPlayer, video) {
-            video.addEventListener("ended", function() {
-                var nextBtn = querySelectorFromIframe('.bilibili-player-video-btn-next');
-                if (nextBtn !== null) {
-                    if (adjustPlayer.checkLoop(newPlayer)) {
-                        return;
-                    }
-                    doClick(nextBtn);
-                }
-            })
-        },
         init: function() {
             //修复后台打开视频页面脚本加载失效
             var documentState = document.visibilityState;
@@ -116,7 +90,6 @@
                                         if (adjustPlayer.hideDanmuku(newPlayer)) {
                                             adjustPlayer.hideExtra(newPlayer);
                                         }
-                                        adjustPlayer.autoNextPlist(newPlayer, video);
                                     }, 1000);
                                     clearInterval(timer);
                                     console.log('adjustPlayer:\nhtml5Player init success');
@@ -175,6 +148,46 @@
         }
     };
 
+    var reloadPList = {
+        getPListId: function(href) {
+            var id;
+            if (typeof href !== 'undefined') {
+                id = href.match(/p=\d*/g) || href.match(/#page=\d*/g) || href.match(/ep\d*/g) || href.match(/ss\d*#\d*/g) || href.match(/watchlater\/#\/av\d*\/p\d*/g) || href.match(/av\d*/g);
+                if (id !== null) {
+                    id = id[0].replace(/\D/g, '');
+                } else {
+                    id = '';
+                }
+            }
+            return id;
+        },
+        init: function() {
+            (function(history) {
+                var pushState = history.pushState;
+                history.pushState = function(state) {
+                    if (typeof history.onpushstate == "function") {
+                        history.onpushstate({ state: state });
+                    }
+                    return pushState.apply(history, arguments);
+                };
+            })(window.history);
+
+            var oldPListId = reloadPList.getPListId(location.href);
+            sessionStorage.setItem("oldPListId", oldPListId);
+
+            window.onpopstate = history.onpushstate = function() {
+                window.setTimeout(function() {
+                    var newPListId, oldPListId;
+                    newPListId = reloadPList.getPListId(location.href);
+                    oldPListId = sessionStorage.getItem("oldPListId");
+                    console.log('reloadPList:\nnewPListId:' + newPListId + "\noldPListId:" + oldPListId);
+                    sessionStorage.setItem("oldPListId", newPListId);
+                    adjustPlayer.init();
+                }, 1000);
+            }
+        }
+    };
+
     function querySelectorFromIframe(obj) {
         var iframePlayer = document.querySelector('iframe.bilibiliHtml5Player');
         if (iframePlayer !== null) {
@@ -206,19 +219,5 @@
     };
 
     adjustPlayer.init();
-
-    //设置onpushstate事件
-    (function(history) {
-        var pushState = history.pushState;
-        history.pushState = function(state) {
-            if (typeof history.onpushstate == "function") {
-                history.onpushstate({ state: state });
-            }
-            return pushState.apply(history, arguments);
-        };
-    })(window.history);
-
-    window.onpopstate = history.onpushstate = function() {
-        adjustPlayer.init();
-    }
+    reloadPList.init();
 })();
