@@ -12,7 +12,7 @@
 // @include     http*://bangumi.bilibili.com/movie/*
 // @exclude     http*://bangumi.bilibili.com/movie/
 // @description 调整B站播放器设置。
-// @version     0.71
+// @version     0.72
 // @run-at      document-end
 // ==/UserScript==
 (function() {
@@ -29,89 +29,6 @@
                 var loopBtn = querySelectorFromIframe('.bilibili-player-video-btn-repeat > i');
                 if (loopBtn.getAttribute('data-text') === "关闭洗脑循环") {
                     return true;
-                }
-                return false;
-            }
-        },
-        checkAutoNextP: function(newPlayer) {
-            if (newPlayer) {
-                var aLabel = document.getElementsByClassName('bui-radio-label');
-                var i = null;
-                for (i = 0; i < aLabel.length; i++) {
-                    if (aLabel[i].innerText.includes("自动切P")) {
-                        var autoNext = aLabel[i];
-                        if (window.getComputedStyle(autoNext).backgroundColor === "rgb(0, 161, 214)") {
-                            return true;
-                        }
-                        return false;
-                    }
-                }
-            } else {
-                var aLabel = document.getElementsByClassName('button bpui-button-text-only');
-                var i = null;
-                for (i = 0; i < aLabel.length; i++) {
-                    if (aLabel[i].innerText === "自动换P") {
-                        var autoNext = aLabel[i];
-                        if (autoNext.className === "button bpui-button-text-only bpui-state-active") {
-                            return true;
-                        }
-                        return false;
-                    }
-                }
-            }
-        },
-        setDefaultNextP: function(newPlayer) {
-            if (newPlayer) {
-                var aLabel = document.getElementsByClassName('bui-radio-label');
-                var i = null;
-                for (i = 0; i < aLabel.length; i++) {
-                    if (aLabel[i].innerText.includes("默认")) {
-                        var defaultNextP = aLabel[i];
-                        if (window.getComputedStyle(defaultNextP).backgroundColor !== "rgb(0, 161, 214)") {
-                            doClick(defaultNextP);
-                        }
-                        return;
-                    }
-                }
-            } else {
-                var aLabel = document.getElementsByClassName('button bpui-button-text-only');
-                var i = null;
-                for (i = 0; i < aLabel.length; i++) {
-                    if (aLabel[i].innerText === "自动换P") {
-                        var defaultNextP = aLabel[i];
-                        while (defaultNextP.className !== "button bpui-button-text-only bpui-state-indeterminate") {
-                            doClick(defaultNextP);
-                        }
-                        return;
-                    }
-                }
-            }
-        },
-        setAutotNextP: function(newPlayer) {
-            if (newPlayer) {
-                var aLabel = document.getElementsByClassName('bui-radio-label');
-                var i = null;
-                for (i = 0; i < aLabel.length; i++) {
-                    if (aLabel[i].innerText.includes("自动切P")) {
-                        var autoNextP = aLabel[i];
-                        if (window.getComputedStyle(autoNextP).backgroundColor !== "rgb(0, 161, 214)") {
-                            doClick(autoNextP);
-                        }
-                        return true;
-                    }
-                }
-                return false;
-            } else {
-                var aLabel = document.getElementsByClassName('button bpui-button-text-only');
-                var i = null;
-                for (i = 0; i < aLabel.length; i++) {
-                    if (aLabel[i].innerText === "自动换P") {
-                        var autoNextP = aLabel[i];
-                        while (autoNextP.className !== "button bpui-button-text-only bpui-state-active") {
-                            doClick(autoNextP);
-                        }
-                        return true;
-                    }
                 }
                 return false;
             }
@@ -167,11 +84,6 @@
                     if (adjustPlayer.checkLoop(newPlayer)) {
                         return;
                     }
-                    if (!adjustPlayer.checkAutoNextP(newPlayer)) {
-                        return;
-                    }
-                    sessionStorage.setItem("autoNextP", "true");
-                    adjustPlayer.setDefaultNextP(newPlayer);
                     doClick(nextBtn);
                 }
             })
@@ -206,17 +118,6 @@
                                         }
                                         adjustPlayer.autoNextPlist(newPlayer, video);
                                     }, 1000);
-
-                                    if (sessionStorage.getItem("autoNextP") === "true") {
-                                        sessionStorage.setItem("autoNextP", "false");
-                                        var restoreTimer = window.setInterval(function() {
-                                            adjustPlayer.setAutotNextP(newPlayer);
-                                            if (adjustPlayer.setAutotNextP(newPlayer)) {
-                                                clearInterval(restoreTimer);
-                                            }
-                                        }, 800);
-                                    }
-
                                     clearInterval(timer);
                                     console.log('adjustPlayer:\nhtml5Player init success');
                                 } catch (e) {
