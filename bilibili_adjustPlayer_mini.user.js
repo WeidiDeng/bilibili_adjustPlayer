@@ -18,21 +18,6 @@
 (function() {
     'use strict';
     var adjustPlayer = {
-        checkLoop: function(newPlayer) {
-            if (newPlayer) {
-                var loopBtn = querySelectorFromIframe('.bilibili-player-video-btn-repeat');
-                if (!loopBtn.classList.contains("closed")) {
-                    return true;
-                }
-                return false;
-            } else {
-                var loopBtn = querySelectorFromIframe('.bilibili-player-video-btn-repeat > i');
-                if (loopBtn.getAttribute('data-text') === "关闭洗脑循环") {
-                    return true;
-                }
-                return false;
-            }
-        },
         hideDanmuku: function(newPlayer) {
             if (newPlayer) {
                 var controlBtn = querySelectorFromIframe('.bilibili-player-video-sendbar .bilibili-player-video-danmaku-root .bilibili-player-video-danmaku-switch > input');
@@ -61,21 +46,13 @@
                 ];
                 if (newPlayer) {
                     var feedback = querySelectorFromIframe('.bilibili-player .bilibili-player-area .bilibili-player-video-wrap .bilibili-player-video-top-issue');
-                    var setting = querySelectorFromIframe('.bilibili-player .bilibili-player-area .bilibili-player-video-control .bilibili-player-video-btn.bilibili-player-video-btn-setting');
                     if (feedback !== null) {
                         css.push('.bilibili-player .bilibili-player-area .bilibili-player-video-wrap .bilibili-player-video-top-issue { display: none }');
                     }
-                    if (setting !== null) {
-                        css.push('.bilibili-player .bilibili-player-area .bilibili-player-video-control .bilibili-player-video-btn.bilibili-player-video-btn-setting { display: none }');
-                    }
                 } else {
                     var message = querySelectorFromIframe('.bilibili-player-video-message');
-                    var setting = querySelectorFromIframe('.bilibili-player-setting-btn');
                     if (message !== null) {
                         css.push('.bilibili-player-video-message { display: none }');
-                    }
-                    if (setting !== null) {
-                        css.push('.bilibili-player-setting-btn { display: none }');
                     }
                 }
                 var node = document.createElement('style');
@@ -84,17 +61,6 @@
                 node.appendChild(document.createTextNode(css.join('')));
                 querySelectorFromIframe('.player').appendChild(node);
             }
-        },
-        autoNextPlist: function(newPlayer, video) {
-            video.addEventListener("ended", function() {
-                var nextBtn = querySelectorFromIframe('.bilibili-player-video-btn-next');
-                if (nextBtn !== null) {
-                    if (adjustPlayer.checkLoop(newPlayer)) {
-                        return;
-                    }
-                    doClick(nextBtn);
-                }
-            })
         },
         init: function() {
             //修复后台打开视频页面脚本加载失效
@@ -124,7 +90,6 @@
                                         if (adjustPlayer.hideDanmuku(newPlayer)) {
                                             adjustPlayer.hideExtra(newPlayer);
                                         }
-                                        adjustPlayer.autoNextPlist(newPlayer, video);
                                     }, 1000);
                                     clearInterval(timer);
                                     console.log('adjustPlayer:\nhtml5Player init success');
