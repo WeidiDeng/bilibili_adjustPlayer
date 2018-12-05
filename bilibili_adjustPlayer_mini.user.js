@@ -61,12 +61,12 @@
                 ];
                 if (newPlayer) {
                     var feedback = querySelectorFromIframe('.bilibili-player .bilibili-player-area .bilibili-player-video-wrap .bilibili-player-video-top-issue');
-                    var setting = querySelectorFromIframe('.bilibili-player-video-btn-setting');
+                    var setting = querySelectorFromIframe('.bilibili-player .bilibili-player-area .bilibili-player-video-control .bilibili-player-video-btn.bilibili-player-video-btn-setting');
                     if (feedback !== null) {
                         css.push('.bilibili-player .bilibili-player-area .bilibili-player-video-wrap .bilibili-player-video-top-issue { display: none }');
                     }
                     if (setting !== null) {
-                        css.push('.bilibili-player-video-btn-setting { display: none }')
+                        css.push('.bilibili-player .bilibili-player-area .bilibili-player-video-control .bilibili-player-video-btn.bilibili-player-video-btn-setting { display: none }')
                     }
                 } else {
                     var message = querySelectorFromIframe('.bilibili-player-video-message');
